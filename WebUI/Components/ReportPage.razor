@@ -1,0 +1,245 @@
+﻿@* 
+    Generic report page layout for visual consistency with a variety of preview and export options.
+    Also provides binding access to the various selections that get saved per-user to prefill repetitive inputs.
+*@
+
+@typeparam TOptions
+
+@inherits BasePage
+
+@using WebUI.Components.Forms
+@using WebUI.Services
+
+<h1>@Title</h1>
+
+<AuthorizedFluidContainer Roles="@Roles">
+    <AuthorizedContent>
+        <EditForm EditContext="_editContext" OnValidSubmit="OnSubmitOptions">
+            <div class="card-group">
+                <div class="card bg-light col-lg-@_cardWidth px-0">
+                    <div class="card-body px-0 py-3">
+
+                        @* render any additional options *@
+                        @OptionsSection
+
+                    </div>
+                    <div class="card-footer px-0 bg-light border-light">
+                        @* render the action buttons (preview, exports) and status text*@
+                        <div class="form-row pl-3 pt-1">
+                            <div class="btn-toolbar col-lg-12">
+                                @if (DoPreview)
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-primary mr-2" disabled="@_buttonsDisabled">Preview</button>
+                                }
+
+                                @if (!DoPreview || HasData())
+                                {
+                                    <div class="btn-group btn-group-sm mr-2">
+                                        @if (DoExportPdf)
+                                        {
+                                            <button type="button" class="btn btn-pdf" @onclick="OnExportPdf" disabled="@_buttonsDisabled">PDF</button>
+                                        }
+
+                                        @if (DoExportCsv)
+                                        {
+                                            <button type="button" class="btn btn-csv" @onclick="OnExportCsv" disabled="@_buttonsDisabled">CSV</button>
+                                        }
+                                    </div>
+                                }
+
+                                @if (!String.IsNullOrEmpty(_status))
+                                {
+                                    <InputGroup Label="@_status" BoldLabel="true"></InputGroup>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @if (OptionsSection2 is not null)
+                {
+                <div class="card bg-light col-lg-@_cardWidth">
+                    <div class="card-body px-0 py-3">
+                        @OptionsSection2
+                    </div>
+                </div>                
+                }
+            </div>
+
+            @* render the data preview section *@
+            @PreviewSection
+
+            @if (_hasBeenPreviewed)
+            {
+                // Only make this alert available after the data has been fetched at least once
+                <UnsubmittedSnackbar SubmitType="Preview" @ref="_unsubmittedSnackbar" />
+            }
+
+        </EditForm>
+    </AuthorizedContent>
+</AuthorizedFluidContainer>
+
+@code {
+    #region Private Fields
+    // EditContext allows on change event handlers with the EditForm
+    private EditContext _editContext;
+
+    // message shown to the user while waiting for data to load, etc.
+    private string _status;
+
+    // should the buttons on this form be currently disabled?
+    private bool _buttonsDisabled;
+
+    // has the data already been previewed at least once?
+    private bool _hasBeenPreviewed;
+
+    // a reference to the alert that shows if options have changed since previewing
+    private UnsubmittedSnackbar _unsubmittedSnackbar;
+
+    private int _cardWidth => OptionsSection2 is null ? 12 : 6;
+    private int _controlWidth => OptionsSection2 is null ? 8 : 12;
+    #endregion
+
+
+    #region Parameters
+    [CascadingParameter(Name = "MainLayout")]
+    public MainLayout MainLayout { get; set; }
+
+    /// <summary>
+    /// The auth roles required to generate this report
+    /// </summary>
+    [Parameter]
+    public string Roles { get; set; }
+
+    /// <summary>
+    /// the display title for this page
+    /// </summary>
+    [Parameter]
+    public string Title { get; set; }
+
+    /// <summary>
+    /// the object used as the model for the options UI,
+    /// as defined by OptionsFragment
+    /// </summary>
+    [Parameter]
+    public TOptions ReportOptions { get; set; }
+
+    /// <summary>
+    /// A function that determines if there is any data loaded for this report
+    /// </summary>
+    [Parameter]
+    public Func<bool> HasData { get; set; }
+
+    /// <summary>
+    /// a RenderFragment defining the specific options UI for this report
+    /// </summary>
+    [Parameter]
+    public RenderFragment OptionsSection { get; set; }
+    [Parameter]
+    public RenderFragment OptionsSection2 { get; set; }
+
+    /// <summary>
+    /// Does this report preview data in a table on-screen?
+    /// If yes, OnPreview is also required.
+    /// </summary>
+    [Parameter]
+    public bool DoPreview { get; set; }
+
+    /// <summary>
+    /// a RenderFragment defining the table(s) that will display report data
+    /// </summary>
+    [Parameter]
+    public RenderFragment PreviewSection { get; set; }
+
+    /// <summary>
+    /// method called when the Preview button is clicked. Required if DoPreview
+    /// </summary>
+    [Parameter]
+    public EventCallback<EditContext> OnPreview { get; set; }
+
+    /// <summary>
+    /// Does this report generate PDF output?
+    /// If yes, OnExportPdf is also required.
+    /// </summary>
+    [Parameter]
+    public bool DoExportPdf { get; set; }
+
+    /// <summary>
+    /// method called when the PDF button is clicked. Required if DoExportPdf
+    /// </summary>
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnExportPdf { get; set; }
+
+    /// <summary>
+    /// Does this report generate CSV output?
+    /// If yes, OnExportCsv is also required.
+    /// </summary>
+    [Parameter]
+    public bool DoExportCsv { get; set; }
+
+    /// <summary>
+    /// method called when the CSV button is clicked. Required if DoExportCsv
+    /// </summary>
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnExportCsv { get; set; }
+    #endregion
+
+    protected async override Task OnInitializedAsync()
+    {
+        _editContext = new EditContext(ReportOptions);
+
+        await base.OnInitializedAsync();
+    }
+
+    /// <summary>
+    /// method called when the Preview button is clicked
+    /// </summary>
+    private async Task OnSubmitOptions(EditContext context)
+    {
+        if (!DoPreview) return;
+
+        MainLayout.ShowProgressBar();
+
+        // don't allow preview or export while refreshing the data
+        ToggleButtonsEnabled();
+
+        // hide the alert if there is one
+        _unsubmittedSnackbar?.Hide();
+
+        // fetch data
+        await OnPreview.InvokeAsync(context);
+
+        // set the flag that we've fetched data at least once
+        _hasBeenPreviewed = true;
+
+        // re-enable actions
+        ToggleButtonsEnabled();
+
+        MainLayout.HideProgressBar();
+    }
+
+    /// <summary>
+    /// flips the state of the action buttons on this page
+    /// </summary>
+    private void ToggleButtonsEnabled()
+    {
+        _buttonsDisabled = !_buttonsDisabled;
+    }
+
+    /// <summary>
+    /// Set a status message for the user
+    /// </summary>
+    public void SetStatus(string status)
+    {
+        _status = status;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Clear the status message
+    /// </summary>
+    public void ClearStatus()
+    {
+        SetStatus(null);
+    }
+}

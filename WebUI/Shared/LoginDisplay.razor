@@ -1,0 +1,50 @@
+﻿<CascadingAuthenticationState>
+
+    <!--top navbar-->
+    <nav class="navbar fixed-top navbar-expand-sm navbar-light navbar-toggleable-sm bg-white border-bottom box-shadow mb-5">
+        <!--Logo-->
+        <a class="navbar-brand" href="/">
+            <img src="/images/Logo.jpg" height="40" alt="Navbar Logo">
+        </a>
+        <!--toggler-->
+        <button class="navbar-toggler" @onclick="ToggleTopNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <!--collapse content-->
+        <div class="@TopNavCssClass navbar-collapse collapse d-sm-inline-flex flex-row-sm" id="navbarMain">
+            <!--placeholder-->
+            <ul class="navbar-nav mr-auto"></ul>
+            <!--login-->
+            <form method="get" action="/Identity/Account/Manage">
+                <button type="submit" class="nav-link btn btn-link text-dark">
+                    <span class="oi oi-person" style="color: #6b6f6d;"></span>&nbsp;Account
+                </button>
+            </form>
+            <!--logout-->
+            <form method="post" action="/Identity/Account/LogOut">
+                <button type="submit" class="nav-link btn btn-link text-dark">
+                    <span class="oi oi-account-logout" style="color: #6b6f6d;"></span>&nbsp;Logout
+                </button>
+            </form>
+            <AuthorizeView Context="Auth" Roles="SuperAdmin">
+                <!--admin-->
+                <form method="get" action="/Identity/Admin/Index">
+                    <button type="submit" class="nav-link btn btn-link text-dark">
+                        <span class="oi oi-lock-locked" style="color: #11dd88;"></span>&nbsp;Admin
+                    </button>
+                </form>
+            </AuthorizeView>
+        </div>
+    </nav>
+</CascadingAuthenticationState>
+
+@code {
+    private bool collapseTopNav = true;
+
+    private string TopNavCssClass => collapseTopNav ? "collapse" : null;
+
+    private void ToggleTopNav()
+    {
+        collapseTopNav = !collapseTopNav;
+    }
+}

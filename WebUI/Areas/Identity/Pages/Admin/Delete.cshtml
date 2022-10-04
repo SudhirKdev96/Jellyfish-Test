@@ -1,0 +1,32 @@
+﻿@page "{userId}"
+@model WebUI.Areas.Identity.Pages.Admin.DeleteModel
+@{
+    ViewData["Title"] = "Delete User";
+    //ViewData["ActivePage"] = ManageNavPages.Index;
+}
+
+<h4>@ViewData["Title"]</h4>
+@*<partial name="_StatusMessage" model="Model.StatusMessage" />*@
+<div class="row">
+    <div class="col-md-6">
+        <form id="delete-form" method="post">
+            <div asp-validation-summary="All" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="UserToDelete.Email"></label>
+                <input asp-for="UserToDelete.Email" class="form-control" disabled />
+            </div>
+            <div class="form-group">
+                <label asp-for="UserToDelete.UserName"></label>
+                <input asp-for="UserToDelete.UserName" class="form-control" disabled />
+            </div>
+            <button id="update-profile-button" type="submit" class="btn btn-danger">Delete</button>
+        </form>
+        <div class="mt-2 pt-2">
+            <a href="/Identity/Admin/">Return to List</a>
+        </div>    
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

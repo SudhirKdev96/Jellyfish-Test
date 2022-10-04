@@ -1,0 +1,286 @@
+﻿@using BlazorTable
+@using System.Linq.Expressions
+@using WebUI.Factory
+@using WebUI.Data.Interfaces
+
+@inject ServiceFactory _factory
+@inject IMatToaster _toaster
+@inject NavigationManager _navigationManager
+
+@typeparam TItem
+@typeparam TService
+
+
+<AuthorizedFluidContainer Roles="@Roles">
+    <AuthorizedContent>
+        <p>
+            <span class="h1">@Title</span>
+
+            <button class="btn btn-success btn-sm rounded-sm float-right" type="button" data-toggle="tooltip"
+                    data-placement="top" title="Add New" @onclick="Add">
+                <i class="fa fa-plus">&nbsp;Add New</i>
+            </button>
+        </p>
+
+        <!-- View Deleted Toggle -->
+        @if (_itemsAreSoftDeletable && _hasDeletedItems)
+        {
+            <AuthorizeView Roles="SuperAdmin,Admin">
+                <Authorized>
+                    <div class="float-right">
+                        <label for="toggleDeleted">
+                            <span class="p-2">View Deleted Records</span>
+                        </label>
+                        <label class="switch float-right p-2">
+                            <input id="toggleDeleted" type="checkbox" @bind="_showDeleted">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </Authorized>
+            </AuthorizeView>
+        }
+
+        <div class="table-selectable">
+            <Table TableItem="TItem" Items="@_displayedItems" PageSize="@PageSize" ShowSearchBar="true" RowClickAction="Edit">
+                <MgmtTableCol TItem="TItem" Title="Id" Field="@IdField" Width="5%" />
+
+                <MgmtTableCol TItem="TItem" Title="@NameFieldTitle" Field="@NameField" DefaultSortColumn="@SortOnName" />
+
+                @ChildContent
+
+                <ActionButtonColumn TableItem="TItem" Action="edit" OnClick="@Edit" />
+
+                <ActionButtonColumn TableItem="TItem" Action="@_deleteRestoreButtonAction" OnClick="@DeleteOrRestoreClick" />
+
+                <Pager ShowPageNumber="true" ShowTotalCount="true" />
+            </Table>
+        </div>
+
+        <!-- Delete confirmation dialog -->
+
+        <ImprovedMatDialog @ref="@_confDialog">
+            <DialogContent>
+                <p>@GetConfirmationText()</p>
+            </DialogContent>
+            <DialogActions>
+                <button class="btn btn-danger btn-sm p-1 m-1" type="button" @onclick="Delete">Delete</button>
+                <button class="btn btn-primary btn-sm p-1 m-1" type="button" @onclick="CloseDialog">Cancel</button>
+            </DialogActions>
+        </ImprovedMatDialog>
+    </AuthorizedContent>
+    <NotAuthorizedContent>
+        <p>You are not authorized to view this page.</p>
+    </NotAuthorizedContent>
+</AuthorizedFluidContainer>
+
+
+@code {
+    #region parameters
+    /// <summary>
+    /// A comma-delimited list of all roles that are allowed to display the content
+    /// defaults to all roles
+    /// </summary>
+    [Parameter]
+    public string Roles { get; set; } = "SuperAdmin,Admin,User";
+
+    /// <summary>
+    /// how manay items per page, defaults to 15
+    /// </summary>
+    [Parameter]
+    public int PageSize { get; set; } = 15;
+
+    /// <summary>
+    /// the display title for this list page
+    /// </summary>
+    [Parameter]
+    public string @Title { get; set; }
+
+    /// <summary>
+    /// the expression for getting the ID of each item in the list
+    /// </summary>
+    [Parameter]
+    public Expression<Func<TItem, object>> IdField { get; set; }
+
+    /// <summary>
+    /// the expression for getting the desired display name of each item in the list
+    /// </summary>
+    [Parameter]
+    public Expression<Func<TItem, object>> NameField { get; set; }
+
+    /// <summary>
+    /// an optional string title for the NameField (e.g. Description), defaults to "Name"
+    /// </summary>
+    [Parameter]
+    public string NameFieldTitle { get; set; } = "Name";
+
+    /// <summary>
+    /// an optional flag to sort on the name column, defaults to true
+    /// </summary>
+    [Parameter]
+    public bool SortOnName { get; set; } = true;
+
+    /// <summary>
+    /// the expression for filtering, including subtypes, or otherwise manipulating
+    /// the dataset used to populate the list view
+    /// </summary>
+    [Parameter]
+    public Func<IQueryable<TItem>, IQueryable<TItem>> Filter { get; set; }
+
+    /// <summary>
+    /// UI (html) segment to render additional columns into the list table
+    /// </summary>
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    /// <summary>
+    /// the "type" part of the url to the editor page for these items.
+    /// Example: the "participant" in /manage/participant/{id}
+    /// </summary>
+    [Parameter]
+    public string ManagePath { get; set; }
+    #endregion
+
+    // ref for confirmation dialog
+    private ImprovedMatDialog _confDialog;
+    // field to capture dialog response
+    private bool _confDialogResponse;
+
+    // items to actually be displayed, which could be AllItems or a subset
+    private ICollection<TItem> _displayedItems
+    {
+        get
+        {
+            var items = AllItems;
+            if (_itemsAreSoftDeletable && items != null)
+            {
+                items = items
+                    .Where(x => ((ISoftDeletable)x).Deleted == _showDeleted)
+                    .ToList();
+            }
+            // return items with filters applied
+            return items;
+        }
+    }
+
+    // convenience property tells us if there are any soft-deleted records
+    private bool _hasDeletedItems => _itemsAreSoftDeletable ? AllItems.Where(x => ((ISoftDeletable)x).Deleted).Any() : false;
+
+    // holds on to an item selected for deletion while confirming
+    private TItem _itemToDelete;
+
+    // a flag to show deleted records in the list view
+    private bool _showDeleted;
+
+    private string _deleteRestoreButtonAction => _showDeleted ? "restore" : "delete";
+
+    // is TItem an ISoftDeletable?
+    private bool _itemsAreSoftDeletable;
+
+    // the service for all DB ops
+    public TService Service { get; set; }
+
+    // the full item list for this list view
+    public List<TItem> AllItems { get; set; }
+
+    // load data before rendering
+    protected override async Task OnInitializedAsync()
+    {
+        // knowing the ID field is an absolute must
+        if (IdField == null)
+        {
+            throw new ArgumentNullException("Management List Page requires an ID field");
+        }
+
+        // get service
+        Service = await _factory.CreateService<TService>();
+        // get queryable collection of generic type TItem, passing in optional Filter arg
+        AllItems = await Service.GetQueryableIncludingDeleted<TItem>(asUntracked: true, filter: Filter).ToListAsync();
+        // check if the assigned type is deletable
+        _itemsAreSoftDeletable = typeof(TItem).GetInterfaces().Contains(typeof(ISoftDeletable));
+    }
+
+    // create a new item
+    private void Add()
+    {
+        // just invokes the editor with an ID of 0
+        _navigationManager.NavigateTo(GetEditorPath(0));
+    }
+
+    // edit the selected item
+    private void Edit(TItem item)
+    {
+        if (item == null) return;
+
+        int id = (int)IdField.Compile().Invoke(item);
+        _navigationManager.NavigateTo(GetEditorPath(id));
+    }
+
+    // Delete or restore an item when the appropriate button is clicked
+    private async Task DeleteOrRestoreClick(TItem item)
+    {
+        if (!_showDeleted)
+        {
+            // open the delete confirmation dialog
+            _itemToDelete = item;
+            _confDialog.Open();
+        }
+        else if (_itemsAreSoftDeletable)
+        {
+            await Service.RestoreAsync((ISoftDeletable)item);
+            string msg = String.Format("{0} restored successfully", GetItemName(item));
+            _toaster.Add(msg, MatToastType.Success);
+            // if the last deleted record was restored...
+            if (!_hasDeletedItems)
+            {
+                // ...take the user back to the non-deleted list
+                _showDeleted = false;
+            }
+        }
+        else
+        {
+            // should never get here
+            _toaster.Add("These items are not restorable", MatToastType.Danger);
+        }
+    }
+
+    // delete the selected item
+    private async Task Delete()
+    {
+        CloseDialog();
+        await Service.DeleteAsync(_itemToDelete);
+        if (!_itemsAreSoftDeletable)
+        {
+            // remove hard deletes from the local list just for visual consistency
+            AllItems.Remove(_itemToDelete);
+        }
+        string msg = String.Format("{0} deleted successfully", GetItemName(_itemToDelete));
+        _toaster.Add(msg, MatToastType.Success);
+    }
+
+    private void CloseDialog()
+    {
+        _confDialog.Close();
+    }
+
+    // put together the right navigation path for editing the given item ID
+    private string GetEditorPath(int id)
+    {
+        return String.Format("/manage/{0}/{1}", ManagePath.Trim(), id);
+    }
+
+    // get text to show when asking the user to delete an item
+    private string GetConfirmationText()
+    {
+        string s = "Are you sure you want to delete {0}?";
+        return String.Format(s, _itemToDelete == null ? "this item"
+            : GetItemName(_itemToDelete));
+    }
+
+    // get the display name for a single item in the list
+    private string GetItemName(TItem item)
+    {
+        if (item == null) return null;
+
+        return NameField?.Compile()?.Invoke(item)?.ToString();
+    }
+}

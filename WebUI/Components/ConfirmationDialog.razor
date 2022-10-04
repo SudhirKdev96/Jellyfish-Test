@@ -1,0 +1,95 @@
+﻿@using WebUI.Components.Forms
+
+@*A preset layout for simple two-button (confirm/cancel) confirmation dialogs*@
+
+<ImprovedMatDialog @ref="_dialog">
+    <DialogContent>
+        <p>@Prompt</p>
+    </DialogContent>
+    <DialogActions>
+        <ActionButton Action="@ConfirmAction" 
+                      ButtonText="@ConfirmButtonText" 
+                      IconName="fa-check" 
+                      CssType="@ConfirmCssType" 
+                      OnClick="@OnConfirmClick"
+                      IsTextButton="true"
+                      MinimizePadding="false" 
+                      CssClass="mr-1" />
+
+        <ActionButton Action="@CancelAction" 
+                      ButtonText="@CancelButtonText"
+                      IconName="fa-times"
+                      CssType="@CancelCssType"
+                      OnClick="@OnCancelClick" 
+                      IsTextButton="true" 
+                      MinimizePadding="false" />
+    </DialogActions>
+</ImprovedMatDialog>
+
+@code {
+    /// <summary>
+    /// Text to prompt user for confirmation
+    /// </summary>
+    [Parameter]
+    public string Prompt { get; set; }
+
+
+    /// <summary>
+    /// Text to show on the confirmation button
+    /// </summary>
+    [Parameter]
+    public string ConfirmButtonText { get; set; }
+
+    /// <summary>
+    /// Bootstrap css type for the confirmation button. Defaults to "danger", which will make the button red.
+    /// </summary>
+    [Parameter]
+    public string ConfirmCssType { get; set; } = "danger";
+
+    /// <summary>
+    /// The button action that a confirm performs. Either this or ConfirmButtonText should likely be provided.
+    /// </summary>
+    [Parameter]
+    public string ConfirmAction { get; set; }
+
+    /// <summary>
+    /// Action to take when the confirmation button is clicked
+    /// </summary>
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnConfirmClick { get; set; }
+
+
+    /// <summary>
+    /// Text to show on the cancel button. 
+    /// This will default to "Cancel" unless CancelAction is overridden
+    /// </summary>
+    [Parameter]
+    public string CancelButtonText { get; set; }
+
+    /// <summary>
+    /// Bootstrap css type for the cancel button.
+    /// This will default to "secondary" unless CancelAction is overridden
+    /// </summary>
+    [Parameter]
+    public string CancelCssType { get; set; }
+    
+    /// <summary>
+    /// The button action that a cancel performs. Defaults to "cancel"
+    /// </summary>
+    [Parameter]
+    public string CancelAction { get; set; } = "cancel";
+    
+    /// <summary>
+    /// Action to take when the cancel button is clicked
+    /// </summary>
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnCancelClick { get; set; }
+
+
+    private ImprovedMatDialog _dialog;
+
+
+    public void Open() => _dialog.Open();
+
+    public void Close() => _dialog.Close();
+}

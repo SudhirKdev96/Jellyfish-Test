@@ -1,0 +1,323 @@
+﻿@using WebUI.Factory
+@using System.Linq.Expressions
+@using WebUI.Data.Interfaces
+@using WebUI.Components.Forms 
+
+@inject ServiceFactory _factory
+@inject IMatToaster _toaster
+@inject NavigationManager _navigationManager
+
+@typeparam TItem
+@typeparam TService
+
+
+<h1>@GetTitle()</h1>
+
+<LastModifiedBadge Item="@_item" />
+
+<AuthorizedFluidContainer Roles="@Roles">
+    <AuthorizedContent>
+        <!-- Back Button -->
+
+        <div class="row">
+            <button class="btn btn-sm btn-outline-primary m-3" @onclick="BackToList">@BackButtonText</button>
+        </div>
+
+        <!-- EditForm -->
+
+        <EditForm EditContext="@_editContext" OnValidSubmit="Save">
+
+            <!-- Edit Fields RenderFragment -->
+
+            <div>@EditFields(_item)</div>
+
+            <!-- Form Validation -->
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <!-- Save and Delete Buttons -->
+
+            <div class="form-row pl-2 pt-1">
+                <div>
+                    @if (!_isSoftDeleted)
+                    {
+                        // don't allow edits unless they've restored the deleted item
+                        <ActionButton Action="save" MinimizePadding="false" ButtonText="@GetSubmitText()" CssClass="mr-1" />
+                    }
+                    @if (GetItemId() > 0)
+                    {
+                        @if (_isSoftDeleted)
+                        {
+                            <ActionButton Action="restore" IsTextButton="true" MinimizePadding="false" OnClick="Restore" />
+                        }
+                        else
+                        {
+                            <ActionButton Action="delete" IsTextButton="true" MinimizePadding="false" OnClick="OpenDeleteDialog" />
+                        }
+                    }
+                </div>
+            </div>
+
+            <!-- Delete Dialog -->
+
+            <ImprovedMatDialog @ref="@_deleteDialog">
+                <DialogContent>
+                    <div class="row">
+                        <div class="col">
+                            <p class="pt-1">@($"Are you sure you want to delete this {Title}?")</p>
+                        </div>
+                    </div>
+                </DialogContent>
+                <DialogActions>
+                    <button class="btn btn-sm btn-danger btn-sm p-1 m-1" type="button" @onclick="Delete">Delete</button>
+                    <button class="btn btn-sm btn-primary btn-sm p-1 m-1" type="button" @onclick="CloseDeleteDialog">Cancel</button>
+                </DialogActions>
+            </ImprovedMatDialog>
+
+            <!-- Unsaved Changes Snackbar (notification) -->
+
+            <UnsubmittedSnackbar @ref="@_unsavedSnackbar" IsSubmitDisabled="@_isSoftDeleted" />
+
+        </EditForm>
+
+        <!-- Back Button -->
+
+        <div class="row">
+            <button class="btn btn-sm btn-outline-primary m-3" @onclick="BackToList">@BackButtonText</button>
+        </div>
+    </AuthorizedContent>
+    <NotAuthorizedContent>
+        <p>You are not authorized to view this page.</p>
+    </NotAuthorizedContent>
+</AuthorizedFluidContainer>
+
+@code {
+    /// <summary>
+    /// A comma-delimited list of all roles that are allowed to display the content
+    /// </summary>
+    [Parameter]
+    public string Roles { get; set; }
+
+    /// <summary>
+    /// the display title for this page, which should also be the user-friendly kind of item being managed (e.g. Client, Currency, etc)
+    /// </summary>
+    [Parameter]
+    public string Title { get; set; }
+
+    /// <summary>
+    /// Override the page header using this function instead of the static Title property
+    /// </summary>
+    [Parameter]
+    public Func<TItem, string> DynamicTitle { get; set; }
+
+    /// <summary>
+    /// optional service instance to use on this page. If not provided, a new TService will be created and used.
+    /// </summary>
+    [Parameter]
+    public TService Service { get; set; }
+    
+    [Parameter]
+    public Func<TService, TItem> LoadItemOverride { get; set; }
+
+    /// <summary>
+    /// the expression for filtering a collection by id field
+    /// e.g. [for payee] (x => x.PayeeId == PayeeID) where PayeeID is a constant
+    /// </summary>
+    [Parameter]
+    public Expression<Func<TItem, bool>> IdFieldFilter { get; set; }
+
+    /// <summary>
+    /// the expression for getting the ID of the item being edited
+    /// </summary>
+    [Parameter]
+    public Expression<Func<TItem, int>> IdField { get; set; }
+
+    /// <summary>
+    /// the query to filter or include navigation properties when retrieving _item
+    /// </summary>
+    [Parameter]
+    public Func<IQueryable<TItem>, IQueryable<TItem>> Query { get; set; }
+
+    /// <summary>
+    /// UI (html) segment to render that contains bounds inputs for the desired fields
+    /// </summary>
+    [Parameter]
+    public RenderFragment<TItem> EditFields { get; set; }
+
+    /// <summary>
+    /// the full path of the url of the page to return to from this page
+    /// e.g. "/list/payee/"
+    /// </summary>
+    [Parameter]
+    public string ReturnPath { get; set; }
+
+    /// <summary>
+    /// the text to display on the back button(s), defaults to "Back To List"
+    /// </summary>
+    [Parameter]
+    public string BackButtonText { get; set; } = "Back To List";
+
+    /// <summary>
+    /// an optional action to take after the managed item is loaded from the DB
+    /// </summary>
+    [Parameter]
+    public Action<TItem> OnItemLoad { get; set; }
+
+    /// <summary>
+    /// an optional function to perform before attempting to save the page
+    /// </summary>
+    [Parameter]
+    public Func<TItem, bool> OnBeforeSave { get; set; }
+
+    /// <summary>
+    /// an optional async function to perform before attempting to save the page
+    /// </summary>
+    [Parameter]
+    public Func<TItem, Task<bool>> OnBeforeSaveAsync { get; set; }
+
+    /// <summary>
+    /// an optional function to perform after successfully saving the page
+    /// </summary>
+    [Parameter]
+    public Func<TItem, bool> OnAfterSave { get; set; }
+
+    /// <summary>
+    /// the active edit context for the form on this page
+    /// </summary>
+    public EditContext EditContext => _editContext;
+
+    // the item to manage
+    private TItem _item;
+
+    // EditContext allows on change event handlers with the EditForm
+    private EditContext _editContext;
+
+    // reference to UnsavedSnackbar component
+    private UnsubmittedSnackbar _unsavedSnackbar;
+
+    // ref for the delete confirmation dialog
+    private ImprovedMatDialog _deleteDialog { get; set; }
+
+    // is this item an ISoftDeletable that is marked deleted?
+    private bool _isSoftDeleted => (_item as ISoftDeletable)?.Deleted ?? false;
+
+    protected async override Task OnInitializedAsync()
+    {
+        // if a service instance wasn't passed in, get a new instance
+        Service = Service ?? await _factory.CreateService<TService>();
+        // load from database, use a new TItem if that fails
+        _item = (LoadItemOverride is not null)
+            ? LoadItemOverride(Service) 
+            : Service.GetQueryableIncludingDeleted<TItem>(asUntracked: false, filter: Query).Where(IdFieldFilter).FirstOrNew();
+        
+        OnItemLoad?.Invoke(_item);
+        // instantiate editContext
+        _editContext = new EditContext(_item);
+    }
+
+    private string GetTitle()
+    {
+        // use the dynamic title function to get the title from the item, or fallback to the static title property
+        return DynamicTitle?.Invoke(_item) ?? Title;
+    }
+
+    // Button text for the form submit
+    private string GetSubmitText()
+    {
+        int id = GetItemId();
+        return id > 0 ? $"{Title}" : $"New {Title}";
+    }
+
+    // Save changes
+    private async Task Save()
+    {
+        _unsavedSnackbar.Hide();
+
+        // do pre-save work if requested
+        bool okToSave = true;
+        if (OnBeforeSaveAsync is not null)
+        {
+            okToSave = await OnBeforeSaveAsync.Invoke(_item);
+        }
+        okToSave = okToSave && (OnBeforeSave?.Invoke(_item) ?? true);
+
+        // bail out if it didn't succeed
+        if (!okToSave) return;
+
+        int saveResult = await Service.SaveAsync<TItem>(_item, IdField);
+        if (saveResult < 0)
+        {
+            _toaster.Add($"Duplicate {Title} could not be saved", MatToastType.Danger);
+        }
+        else if (saveResult == 0)
+        {
+            _toaster.Add($"{Title} could not be saved", MatToastType.Danger);
+        }
+        else
+        {
+            _toaster.Add($"{Title} saved successfully", MatToastType.Success);
+            OnAfterSave?.Invoke(_item);
+        }
+    }
+
+    // show the delete confirmation dialog
+    private void OpenDeleteDialog()
+    {
+        _deleteDialog.Open();
+    }
+
+    // delete the selected TItem
+    private async Task Delete()
+    {
+        CloseDeleteDialog();
+        await Service.DeleteAsync(_item);
+        _toaster.Add($"{Title} deleted successfully", MatToastType.Success);
+        // navigate back to list view
+        BackToList();
+    }
+
+    private void CloseDeleteDialog()
+    {
+        _deleteDialog.Close();
+    }
+
+    private async Task Restore()
+    {
+        int result = await Service.RestoreAsync(_item as ISoftDeletable);
+
+        if (result > 0)
+        {
+            _toaster.Add($"{Title} restored successfully", MatToastType.Success);
+        }
+        else
+        {
+            // should never end up here
+            _toaster.Add("This item is not restorable", MatToastType.Danger);
+        }
+    }
+
+    /* helper methods */
+    private void BackToList()
+    {
+        // send the user back to the list view or other requested path
+        var path = ReturnPath.Trim();
+
+        // if the return path has this token in it, replace it with the ID of the entity being managed
+        if (path.Contains("ENTITYITEMID"))
+        {
+            path = path.Replace("ENTITYITEMID", GetItemId().ToString());
+        }
+        _navigationManager.NavigateTo(path);
+    }
+
+    public int GetItemId()
+    {
+        // get id field from item, if that fails return zero
+        return IdField?.Compile()?.Invoke(_item) ?? 0;
+    }
+
+    public TItem GetItem()
+    {
+        return _item;
+    }
+}

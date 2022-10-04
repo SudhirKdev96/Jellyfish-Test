@@ -1,0 +1,70 @@
+@using WebUI.Data.Interfaces
+@using WebUI.Factory
+@using WebUI.Services
+@using Microsoft.AspNetCore.Identity
+
+@inject ServiceFactory _factory
+
+
+<span class="badge badge-pill badge-info">@LastModifiedNote</span>
+
+
+@code {
+
+    [Parameter]
+    public object Item { get; set; }
+
+    // the service for all DB ops
+    private ServiceBase _service { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        // get service
+        _service = await _factory.CreateServiceBaseAsync();
+    }
+
+    // a created/last modified "when" by "who" note
+    private string LastModifiedNote
+    {
+        get
+        {
+            // note to show - empty if the Item doesn't implement IAuditable
+            string note = "";
+            // get these fields from IAuditable fields
+            if (Item is IAuditable auditable)
+            {
+                string verb, time, userName;
+                if (auditable.ChangedById != null && auditable.ChangedDateTime.HasValue)
+                {
+                    // Item has been changed since it's original creation, use the Changed fields
+                    verb = "last modified";
+                    time = auditable.ChangedDateTime.ToString();
+                    userName = _service.GetUserByGuid(auditable.ChangedById).UserName;
+                }
+                else
+                {
+                    // Item has NOT been changed since it's original creation, use Created fields
+                    verb = "created";
+                    if (auditable.CreatedById != null && auditable.CreatedDateTime != DateTime.MinValue)
+                    {
+                        // this record isn't being created right now (but it hasn't been modified since)
+                        time = auditable.CreatedDateTime.ToString();
+                        userName = _service.GetUserByGuid(auditable.CreatedById).UserName;
+                    }
+                    else
+                    {
+                        // this is a record being created right now
+                        // option 1 - use "now" and "you"
+                        //time = "now";
+                        //userName = "you";
+                        // option 2 - use value of DateTime.Now and the current user's UserName
+                        time = DateTime.Now.ToString();
+                        userName = _service.GetCurrentUser().UserName;
+                    }
+                }
+                note = $"{verb} {time} by {userName}";
+            }
+            return note;
+        }
+    }
+}

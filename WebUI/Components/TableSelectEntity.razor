@@ -1,0 +1,40 @@
+﻿@typeparam TItem
+
+@using BlazorTable; 
+@using WebUI.Data.Enums
+@using WebUI.ViewModels
+@using WebUI.Components.Abstract
+@using WebUI.Factory
+
+@inject ServiceFactory _factory
+
+@inherits CustomSelectorBase<TItem, SelectOption<int>, List<int>>
+
+
+@if (HasAnyOptions)
+{
+    <h5>Select one or more option:</h5>
+    <div class="table-selectable">
+        <Table TableItem="SelectOption<int>"
+                Items="@_options"
+                PageSize="@PageSize"
+                SelectionType="@SelectionType"
+                SelectedItems="@_selectedItems">
+
+            <Column TableItem="SelectOption<int>" Title="Selected" Class="selected-checkmark text-center" Width="1%">
+                <Template>
+                    &#10004;
+                </Template>
+            </Column>
+
+            <MgmtTableCol TItem="SelectOption<int>" Title="Item" Field="@(x => x.DisplayName)" />
+
+            <Pager />
+
+        </Table>
+    </div>
+}
+else
+{
+    <h5>There are no options available</h5>
+}

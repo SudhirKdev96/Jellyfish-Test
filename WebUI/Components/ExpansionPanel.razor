@@ -1,0 +1,28 @@
+﻿<MatExpansionPanel Expanded="@Expanded">
+    <MatExpansionPanelSummary Class="purple-gradient text-white">
+        <MatExpansionPanelHeader Class="@HeaderClass">
+            @Title
+        </MatExpansionPanelHeader>
+    </MatExpansionPanelSummary>
+
+    <MatExpansionPanelDetails Class="@DetailsClass" Style="overflow:unset">
+        @ChildContent
+    </MatExpansionPanelDetails>
+</MatExpansionPanel>
+
+@code {
+    [Parameter]
+    public string Title { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter]
+    public string HeaderClass { get; set; }
+
+    [Parameter]
+    public string DetailsClass { get; set; } = "bg-light";
+
+    [Parameter]
+    public bool Expanded { get; set; }
+}

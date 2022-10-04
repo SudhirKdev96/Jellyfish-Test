@@ -1,0 +1,59 @@
+﻿@using System.Diagnostics.CodeAnalysis
+
+@typeparam TEnum
+
+@inherits InputBase<TEnum>
+
+<div class="btn-group pl-1" role="group" aria-label="@AriaLabel">
+    @foreach (TEnum o in Enum.GetValues(typeof(TEnum)))
+    {
+        var opt = o;
+        <button type="button"
+                class="btn btn-sm @GetClass(opt)"
+                @onclick="e => SetCurrentValue(opt)">
+            @ChildContent(o)
+        </button>
+    }
+</div>
+
+@code {
+    /// <summary>
+    /// text for the aria-label attribute (for accessibility)
+    /// </summary>
+    [Parameter]
+    public string AriaLabel { get; set; }
+
+    /// <summary>
+    /// Render Fragment that determines how each enum value is turned into a string for the button text
+    /// </summary>
+    [Parameter]
+    public RenderFragment<TEnum> ChildContent { get; set; }
+
+    /// <summary>
+    /// Changes the selected value in a way that will fire the ValueChanged event automatically
+    /// </summary>
+    /// <param name="value"></param>
+    protected void SetCurrentValue(TEnum value)
+    {
+        CurrentValue = value;
+    }
+
+    /// <summary>
+    /// picks a css class for a format option depending on selection
+    /// </summary>
+    private string GetClass(TEnum opt)
+    {
+        return opt.Equals(Value) ? "btn-secondary" : "btn-outline-secondary";
+    }
+
+    protected override bool TryParseValueFromString(string value, 
+        [MaybeNullWhen(false)] out TEnum result, 
+        [NotNullWhen(false)] out string validationErrorMessage)
+    {
+        bool success = Enum.TryParse(value, out result);
+
+        validationErrorMessage = success ? null : $"{value} is not a valid {typeof(TEnum).Name}";
+
+        return success;
+    }
+}

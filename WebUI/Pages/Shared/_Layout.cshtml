@@ -1,0 +1,42 @@
+﻿@using Microsoft.AspNetCore.Hosting
+@using Microsoft.AspNetCore.Mvc.ViewEngines
+@using WebUI.Data
+@inject IWebHostEnvironment Environment
+@inject ICompositeViewEngine Engine
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blazor App</title>
+    <link rel="stylesheet" href="~/Identity/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/Identity/css/site.css" />
+    <link rel="stylesheet" href="~/css/open-iconic/font/css/open-iconic-bootstrap.min.css">
+
+</head>
+<body>
+    <div>
+       @if (SignInManager.IsSignedIn(User))
+        {
+            <component type="typeof(WebUI.Shared.LoginDisplay)" render-mode="ServerPrerendered" />
+        }
+     </div>
+
+    <div class="container">
+        <main role="main" class="pb-3 pt-5 mt-5">
+            @RenderBody()
+        </main>
+    </div>
+    <footer class="footer border-top text-muted">
+        <div class="container">
+            &copy; @DateTime.Today.Year TechRiver LLC
+        </div>
+    </footer>
+    <script src="~/Identity/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/Identity/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/Identity/js/site.js" asp-append-version="true"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

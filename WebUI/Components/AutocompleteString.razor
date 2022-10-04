@@ -1,0 +1,24 @@
+﻿@typeparam TItem
+
+@using WebUI.Components.Abstract
+@using WebUI.Factory
+
+@inject ServiceFactory _factory
+
+
+@inherits CustomSelectorBase<TItem, string, string>
+
+<QuickAutocomplete placeholder="@GetPlaceHolderText()"
+                   disabled="@(IsRefreshing || Disabled)"
+                   TItem="string"
+                   Data="@_options"
+                   Value="@Value"
+                   ValueChanged="@SelectedOptionChanged"
+                   MaxItemsHeight="315px"
+                   MaxItemsToShow="500"
+                   Width="@Width"
+                   Class="@Class"
+                   ContainerClass="@ContainerClass"
+                   AllowCustomValues="@AllowCustomValues"
+                   ChooseItemOnBlur="true"
+                   ShowClearButton="@(!IsRefreshing && !Disabled)" />

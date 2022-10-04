@@ -1,0 +1,116 @@
+﻿@page "{userId}"
+@model WebUI.Areas.Identity.Pages.Admin.EditModel
+@{
+    ViewData["Title"] = "Edit User";
+    //ViewData["ActivePage"] = ManageNavPages.ChangePassword;
+}
+
+<h3>@ViewData["Title"]</h3>
+<a href="/Identity/Admin/">Return to List</a>
+<hr />
+
+<div class="row ">
+    @*password section*@
+    <div class="col-md-6 mb-4 ">
+        <h4>Change Password</h4>
+        <partial name="_StatusMessage" for="PasswordStatusMessage" />
+        <div class="row">
+            <div class="col-md-10">
+                <form id="change-password-form" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    @*<div class="form-group">
+                        <label asp-for="Input.OldPassword"></label>
+                        <input asp-for="Input.OldPassword" class="form-control" />
+                        <span asp-validation-for="Input.OldPassword" class="text-danger"></span>
+                    </div>*@
+                    <div class="form-group">
+                        <label asp-for="Input.NewPassword"></label>
+                        <input asp-for="Input.NewPassword" class="form-control" />
+                        <span asp-validation-for="Input.NewPassword" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Input.ConfirmPassword"></label>
+                        <input asp-for="Input.ConfirmPassword" class="form-control" />
+                        <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @*Email section*@
+    <div class="col-md-6 mb-4 ">
+        <h4>Change Email</h4>
+        <partial name="_StatusMessage" for="EmailStatusMessage" />
+        <div class="row">
+            <div class="col-md-10">
+                <form id="email-form" method="post">
+                    @*<div asp-validation-summary="All" class="text-danger"></div>*@
+                    <div class="form-group">
+                        <label asp-for="Email"></label>
+                        <div class="input-group">
+                            <input asp-for="Email" class="form-control" disabled />
+                            <div class="input-group-append">
+                                <span class="input-group-text text-success font-weight-bold">✓</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Input.NewEmail"></label>
+                        <input asp-for="Input.NewEmail" class="form-control" />
+                        <span asp-validation-for="Input.NewEmail" class="text-danger"></span>
+                    </div>
+                    <button id="change-email-button" type="submit" asp-page-handler="ChangeEmail" class="btn btn-primary">Change email</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @*Role section*@
+    <div class="col-md-6 mb-4 ">
+        <h4>Update Role</h4>
+        <partial name="_StatusMessage" for="RoleStatusMessage" />
+        <div class="row">
+            <div class="col-md-10">
+                <form id="role-form" method="post">
+                    @*<div asp-validation-summary="All" class="text-danger"></div>*@
+                    <div class="form-group">
+                        <label asp-for="Input.NewRole"></label>
+                        <select asp-for="Input.NewRole" class="form-control">
+                            <option value="-1">--Select a Role--</option>
+                            @{
+                                if (Model.RoleList != null)
+                                {
+                                    foreach (var role in Model.RoleList)
+                                    {
+                                        if (role.Name.Equals("disabled", StringComparison.CurrentCultureIgnoreCase))
+                                        {
+                                            continue;
+                                        }
+
+                                        if (role.Name == Model.Role)
+                                        {
+                                            <option value="@role.Name" selected>@role.Name</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@role.Name">@role.Name</option>
+                                        }
+                                    }
+                                }
+                            }
+                        </select>
+                        <span asp-validation-for="Input.NewRole" class="text-danger"></span>
+                    </div>
+                    <button id="change-role-button" type="submit" asp-page-handler="ChangeRole" class="btn btn-primary">Update Role</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

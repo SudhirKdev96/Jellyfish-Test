@@ -1,0 +1,55 @@
+﻿@typeparam TItem
+
+@using WebUI.ViewModels
+@using WebUI.Components.Abstract
+@using WebUI.Factory
+@using WebUI.Data.Interfaces;
+
+@inject ServiceFactory _factory
+
+
+@inherits CustomSelectorBase<TItem, ISelectOption<int>, int?>
+
+<QuickAutocomplete placeholder="@GetPlaceHolderText()"
+                   disabled="@(IsRefreshing || Disabled)"
+                   TItem="ISelectOption<int>"
+                   Data="@_options"
+                   TextField="@nameof(ISelectOption<int>.DisplayName)"
+                   Value="@_selectedOption"
+                   ValueChanged="@SelectedOptionChanged"
+                   MaxItemsHeight="315px"
+                   MaxItemsToShow="500"
+                   Width="@Width"
+                   Class="@Class"
+                   ContainerClass="@ContainerClass"
+                   AllowCustomValues="@AllowCustomValues"
+                   ChooseItemOnBlur="true" 
+                   ShowClearButton="@(!IsRefreshing && !Disabled)">
+
+    <ItemTemplate>
+        @if (ItemTemplate == null)
+        {
+            if (context.DataObject is IFormattedSelectOption<int> opt)
+            {
+                // this is an option with multiple parts to display, like the Party Autocomplete shows party type
+                <div class="d-flex flex-row justify-content-between p-0">
+                    @foreach (var part in opt.DisplayParts)
+                    {
+                        <span>@part</span>
+                    }
+                </div>
+            }
+            else
+            {
+                // this is an option with just one value to display
+                @context.DataObject.DisplayName
+            }
+        }
+        else
+        {
+            // the way to display this item has been explicitly specified
+            @ItemTemplate(context.DataObject)
+        }
+    </ItemTemplate>
+
+</QuickAutocomplete>

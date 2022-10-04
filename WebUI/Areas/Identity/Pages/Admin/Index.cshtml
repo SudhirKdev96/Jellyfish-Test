@@ -1,0 +1,81 @@
+﻿@page
+@model WebUI.Areas.Identity.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Users";
+}
+
+<div class="form-inline">
+        <h3 class="modal-title p-2 m-1">@ViewData["Title"]</h3>
+        <button onclick="location.href='/Identity/Admin/Create/'" class="btn btn-outline-primary p-2 m-1">Create New User</button>
+</div>
+<hr />
+
+<partial name="_StatusMessage" model="Model.StatusMessage" />
+@{
+    <div>
+        <table class="table table-sm table-striped">
+            <tr class="table-row thead-light">
+                <th>Email</th>
+                <th>Email Confirmed?</th>
+                <th>2FA Enabled?</th>
+                <th>Role</th>
+                <th></th>
+                <th></th>
+            </tr>
+            @foreach (var user in Model?.UserRoleDict)
+            {
+                bool userIsDisabled = false;
+
+                <tr class="table-row">
+                    <td>@user.Key.Email</td>
+                    <td>@user.Key.EmailConfirmed</td>
+                    <td>@user.Key.TwoFactorEnabled</td>
+                    <td>
+                        @foreach (var roleName in user.Value)
+                        {
+                            @if (Model.IsAdmin(roleName))
+                            {
+                                <span class="badge badge-primary mt-2 mb-2">@roleName</span>
+                            }
+                            else if (Model.IsDisabled(roleName))
+                            {
+                                <span class="badge badge-danger mt-2 mb-2">@roleName</span>
+                                userIsDisabled = true;
+                            }
+                            else
+                            {
+                                <span class="badge badge-secondary mt-2 mb-2">@roleName</span>
+                            }
+                        }
+                    </td>
+                    <td>
+                        @if (!userIsDisabled)
+                        {
+                            <button type="button" class="btn btn-outline-secondary" name="edit-user" value="@user.Key.Id" onclick="location.href='/Identity/Admin/Edit/@user.Key.Id/'">Edit</button>
+                        }
+                    </td>
+                    <td>
+                        @if (userIsDisabled)
+                        {
+                            <form asp-page-handler="Enable" method="post">
+                                <button class="btn btn-outline-secondary w-100" name="enable-user" value="@user.Key.Id">Enable</button>
+                                <input type="hidden" name="userId" value="@user.Key.Id" />
+                            </form>
+                        }
+                        else
+                        {
+                            <form asp-page-handler="Disable" method="post">
+                                <button class="btn btn-outline-danger w-100" name="delete-user" value="@user.Key.Id">Disable</button>
+                                <input type="hidden" name="userId" value="@user.Key.Id" />
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </table>
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

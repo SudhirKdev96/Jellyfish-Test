@@ -1,0 +1,108 @@
+﻿@page "/manage/project/{ProjectId:int}"
+@using WebUI.Components
+@using WebUI.Components.Forms
+@using WebUI.Services
+@using WebUI.Data.Enums
+
+@attribute [Authorize(Roles = "SuperAdmin,Admin,User")]
+
+<AuthorizeView Roles="SuperAdmin,Admin,User">
+    <Authorized Context="authContext">
+        @*the "Query" Parameter is included so that the LastModifiedBadge component is populated correctly*@
+        <ManagementPage TItem="Project"
+                        TService="ServiceBase"
+                        Title="Project"
+                        IdField="@(x => x.ProjectId)"
+                        IdFieldFilter="@(x => x.ProjectId == ProjectId)"
+                        ReturnPath="/list/project">
+            <EditFields>
+                <!--Form Fields-->
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <div class="input-group input-group-sm">
+                            <!--Name - limited to 255 chars using maxlenth attribute-->
+                            <InputGroup Label="Name" Colspan="12" ContainerClass="col-lg-6 px-0 py-1">
+                                <InputText class="form-control form-control-sm" @bind-Value="@context.Name" maxlength="255" />
+                            </InputGroup>
+                            <!--Client [Autocomplete]-->
+                            <InputGroup Label="Client" Colspan="12" ContainerClass="col-lg-6 px-0 py-1">
+                                <AutocompleteEntity Placeholder="Client" TItem="Client" @bind-Value="@context.ClientId" ContainerClass="w-100" />
+                            </InputGroup>
+                            <!--Billing Rate - money -->
+                            <InputGroup Label="Billing Rate" Colspan="12" ContainerClass="col-lg-6 px-0 py-1">
+                                <InputCurrency @bind-Value="@context.NullableBillingRate"
+                                               class="form-control form-control-sm w-100 bg-white text-right" />
+                            </InputGroup>
+                            <!--Deposit - money -->
+                            <InputGroup Label="Deposit" Colspan="12" ContainerClass="col-lg-6 px-0 py-1">
+                                <InputCurrency @bind-Value="@context.NullableDeposit"
+                                               class="form-control form-control-sm w-100 bg-white text-right" />
+                            </InputGroup>
+                            <!--Referral Percent - decimal -->
+                            <InputGroup Label="Referral Percent" Colspan="12" ContainerClass="col-lg-6 px-0 py-1">
+                                <span class="input-group-text">%</span>
+                                <InputNumber TValue="decimal" step="0.01" class="form-control form-control-sm" @bind-Value="@context.ReferralPercent" />
+                            </InputGroup>
+                            <!--Estimated Revenue - money -->
+                            <InputGroup Label="Estimated Revenue" Colspan="12" ContainerClass="col-lg-6 px-0 py-1">
+                                <InputCurrency @bind-Value="@context.NullableEstimatedRevenue"
+                                               class="form-control form-control-sm w-100 bg-white text-right" />
+                            </InputGroup>
+                            <!-- Start and End Date - date range ->
+                            <InputGroupDateRange Label="Project Scheduled"
+                                                 @bind-FromDate="@context.StartDate"
+                                                 @bind-ToDate="@context.EndDate"
+                                                 Colspan="12" CssClass="col-lg-6 px-0 py-1" />
+                            <!--Frequency - Enum-->
+                            <InputGroup Label="Invoice Frequency" Colspan="12" ContainerClass="col-lg-6 px-0 py-1">
+                                <InputSelect TValue="Frequency" class="form-control form-control-sm" @bind-Value="@context.InvoiceFrequency">
+                                    <option></option>
+                                    @foreach (Frequency frequency in Enum.GetValues(typeof(Frequency)))
+                                    {
+                                        <option value="@(frequency)">@frequency.ToLabel()</option>
+                                    }
+                                </InputSelect>
+                            </InputGroup>
+                            <!--Billing Type - Enum-->
+                            <InputGroup Label="Billing Type" Colspan="12" ContainerClass="col-lg-6 px-0 py-1">
+                                <InputSelect TValue="BillingType" class="form-control form-control-sm" @bind-Value="@context.BillingType">
+                                    <option></option>
+                                    @foreach (BillingType billingType in Enum.GetValues(typeof(BillingType)))
+                                    {
+                                        <option value="@(billingType)">@billingType.ToLabel()</option>
+                                    }
+                                </InputSelect>
+                            </InputGroup>
+                            <!--Active [Checkbox]-->
+                            <div class="ml-3 py-1">
+                                <InputGroupCheckbox @bind-Value="@context.Active"
+                                                    Label="Active"
+                                                    ContainerClass="pr-1 w-auto" />
+                            </div>
+                            <!--Notes [TextArea]-->
+                            <InputGroup Label="Notes" Colspan="12" ContainerClass="col-lg-6 px-0 py-1">
+                                <InputTextArea class="form-control form-control-sm" @bind-Value="@context.Notes" />
+                            </InputGroup>
+                        </div>
+                    </div>
+                </div>
+            </EditFields>
+        </ManagementPage>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    [CascadingParameter(Name = "MainLayout")]
+    public MainLayout MainLayout { get; set; }
+
+    [Parameter]
+    public int ProjectId { get; set; }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        // the AuthorizedFluidContainer component inside ManagementPage tries to hide the progress bar
+        // but doesn't do a good job for this page, probably because it's so simple and loads in one render
+        // so explicitly hide the progress bar after render
+        MainLayout.HideProgressBar();
+    }
+}

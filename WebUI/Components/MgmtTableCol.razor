@@ -1,0 +1,37 @@
+﻿@using BlazorTable
+@typeparam TItem
+@inherits Column<TItem>
+
+@code {
+    /// <summary>
+    /// is this column sortable? defaults to true, unlike the base Column type
+    /// </summary>
+    [Parameter]
+    public bool? CanSort { get; set; } = true;
+
+    /// <summary>
+    /// is this column filterable? defaults to true, unlike the base Column type
+    /// </summary>
+    [Parameter]
+    public bool? CanFilter { get; set; } = true;
+
+    /// <summary>
+    /// is this column hidden by default? defaults to false
+    /// </summary>
+    [Parameter]
+    public bool Hidden { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Sortable = CanSort ?? Sortable;
+        Filterable = CanFilter ?? Filterable;
+
+        if (Hidden)
+        {
+            Hideable = true;
+            Visible = false;
+        }
+
+        base.OnInitialized();
+    }
+}

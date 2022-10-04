@@ -1,0 +1,27 @@
+﻿@using WebUI.Components.Abstract
+@using WebUI.Factory
+@using WebUI.Data.Interfaces
+
+@typeparam TUser
+@typeparam TService
+
+@inject ServiceFactory _factory
+
+
+@inherits CustomSelectorBase<TUser, ISelectOption<string>, string>
+
+<QuickAutocomplete placeholder="@GetPlaceHolderText()"
+                   disabled="@(IsRefreshing || Disabled)"
+                   TItem="ISelectOption<string>"
+                   TextField="@nameof(ISelectOption<string>.DisplayName)"
+                   Data="@_options"
+                   Value="@_selectedOption"
+                   ValueChanged="@SelectedOptionChanged"
+                   MaxItemsHeight="315px"
+                   MaxItemsToShow="500"
+                   Width="@Width"
+                   Class="@Class"
+                   ContainerClass="@ContainerClass"
+                   AllowCustomValues="@AllowCustomValues"
+                   ChooseItemOnBlur="true" 
+                   ShowClearButton="@(!IsRefreshing && !Disabled)" />

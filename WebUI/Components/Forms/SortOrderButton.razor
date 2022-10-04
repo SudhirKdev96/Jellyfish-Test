@@ -1,0 +1,90 @@
+﻿@using System;
+@using System.Collections.Generic;
+@using System.Globalization;
+
+@typeparam TItem
+
+<button class="@GetButtonClass()" type="button" data-toggle="tooltip"
+        data-placement="top" title="@_title" @onclick="@Move"
+        disabled="@_disabled">
+    <i class="@_iconClass"></i>
+</button>
+
+@code {
+    /// <summary>
+    /// an item with a sort order property
+    /// </summary>
+    [Parameter]
+    public TItem Item { get; set; }
+
+    /// <summary>
+    /// the collection of all items that contains <c>Item</c>
+    /// </summary>
+    [Parameter]
+    public ICollection<TItem> SortedItems { get; set; }
+
+    /// <summary>
+    /// the movement/arrow direction this button represents ("up" or "down")
+    /// </summary>
+    [Parameter]
+    public string Direction { get; set; }
+
+    /// <summary>
+    /// an optional hook for action to take when this button is pressed
+    /// </summary>
+    [Parameter]
+    public Action OnSortOrderChanged { get; set; }
+
+    private float? _minSortOrder => SortedItems.Min(x => x.SortOrder);
+    private float? _maxSortOrder => SortedItems.Max(x => x.SortOrder);
+
+    private string _iconClass => $"fas fa-arrow-{Direction.ToLower()}";
+
+    private string _title => $"Move {Direction.ToTitleCase()}";
+
+    private bool _disabled => Direction.ToLower() switch
+    {
+        "up" => Item.SortOrder <= _minSortOrder,
+        "down" => Item.SortOrder >= _maxSortOrder,
+        _ => true
+    };
+
+    private string GetButtonClass()
+    {
+        if (_disabled)
+        {
+            return "btn btn-outline-secondary btn-sm rounded-sm";
+        }
+        else
+        {
+            return "btn btn-outline-success btn-sm rounded-sm";
+        }
+    }
+
+    private void Move()
+    {
+        if (_disabled) { return; }
+
+        switch (Direction.ToLower())
+        {
+            case "up":
+                var newSortOrder = SortedItems.Where(x => x.SortOrder < Item.SortOrder).Max(x => x.SortOrder);
+                var displacedItem = SortedItems.FirstOrDefault(x => x.SortOrder == newSortOrder);
+                if (displacedItem is not null) { displacedItem.SortOrder = Item.SortOrder; }
+                Item.SortOrder = newSortOrder;
+                OnSortOrderChanged?.Invoke();
+                break;
+
+            case "down":
+                newSortOrder = SortedItems.Where(x => x.SortOrder > Item.SortOrder).Min(x => x.SortOrder);
+                displacedItem = SortedItems.FirstOrDefault(x => x.SortOrder == newSortOrder);
+                if (displacedItem is not null) { displacedItem.SortOrder = Item.SortOrder; }
+                Item.SortOrder = newSortOrder;
+                OnSortOrderChanged?.Invoke();
+                break;
+
+            default:
+                break;
+        }
+    }
+}

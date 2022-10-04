@@ -1,0 +1,61 @@
+﻿@*
+    Convenience Component for having a bootstrap container-fluid div wrapped in AuthorizeView and Authorized Components
+    without having to start every page nested three tabs deep
+*@
+
+<AuthorizeView Roles="@Roles">
+    <Authorized Context="authContext">
+        <div class="container-fluid">
+            @AuthorizedContent
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        @if (NotAuthorizedContent is not null)
+        {
+            @NotAuthorizedContent
+        }
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [CascadingParameter(Name = "MainLayout")]
+    public MainLayout MainLayout { get; set; }
+
+    /// <summary>
+    /// A comma-delimited list of all roles that are allowed to display the content
+    /// </summary>
+    [Parameter]
+    public string Roles { get; set; }
+
+    [Parameter]
+    public RenderFragment AuthorizedContent { get; set; }
+
+    [Parameter]
+    public RenderFragment NotAuthorizedContent { get; set; }
+
+    // a flag for deciding when to turn off the progress animation
+    private bool initialProgressComplete;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        MainLayout.ShowProgressBar();
+
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // The first render seems to happen before any data is loaded, so don't
+        // even consider hiding the progress bar til the second time around.
+        // The initialProgressComplete flag prevents an infinite loop here 
+        // (since hiding the progress bar will trigger another render cycle)
+        if (!firstRender && !initialProgressComplete)
+        {
+            initialProgressComplete = true;
+            MainLayout.HideProgressBar();
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+}

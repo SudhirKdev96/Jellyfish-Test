@@ -1,0 +1,46 @@
+﻿@inherits LayoutComponentBase
+
+@*"page" div wrapper needed for update to .NET 5*@
+<div class="page">
+    <CascadingValue Value="@this" Name="MainLayout">
+
+        <div class="sidebar">
+            <NavMenu />
+        </div>
+
+        <div class="main">
+            <MatProgressBar Indeterminate="true" Closed="@(!_somethingIsInProgress)" />
+
+            <div>
+                <LoginDisplay />
+            </div>
+
+            <div class="content px-4">
+                @Body
+            </div>
+        </div>
+
+    </CascadingValue>
+</div>
+
+@code {
+    private bool _somethingIsInProgress;
+
+    public void ShowProgressBar()
+    {
+        if (!_somethingIsInProgress)
+        {
+            _somethingIsInProgress = true;
+            StateHasChanged();
+        }
+    }
+
+    public void HideProgressBar()
+    {
+        if (_somethingIsInProgress)
+        {
+            _somethingIsInProgress = false;
+            StateHasChanged();
+        }
+    }
+}

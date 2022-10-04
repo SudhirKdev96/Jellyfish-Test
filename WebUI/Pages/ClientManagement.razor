@@ -1,0 +1,96 @@
+﻿@page "/manage/client/{ClientId:int}"
+@using WebUI.Components
+@using WebUI.Components.Forms
+@using WebUI.Services
+
+@attribute [Authorize(Roles = "SuperAdmin,Admin,User")]
+
+<AuthorizeView Roles="SuperAdmin,Admin,User">
+    <Authorized Context="authContext">
+        @*the "Query" Parameter is included so that the LastModifiedBadge component is populated correctly*@
+        <ManagementPage TItem="Client"
+                        TService="ServiceBase"
+                        Title="Client"
+                        IdField="@(x => x.ClientId)"
+                        IdFieldFilter="@(x => x.ClientId == ClientId)"
+                        ReturnPath="/list/client">
+            <EditFields>
+                <!--Form Fields-->
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <div class="input-group input-group-sm">
+                            <!--Name - limited to 255 chars using maxlenth attribute-->
+                            <InputGroup Label="Name" Colspan="12" ContainerClass="col-lg-6 px-0 py-1">
+                                <InputText class="form-control form-control-sm" @bind-Value="@context.Name" maxlength="255" />
+                            </InputGroup>
+                            <!--Short Name - limited to 32 chars using maxlenth attribute-->
+                            <InputGroup Label="Short Name" Colspan="12" ContainerClass="col-lg-6 px-0 py-1">
+                                <InputText class="form-control form-control-sm" @bind-Value="@context.ShortName" maxlength="32" />
+                            </InputGroup>
+                            <!--Street Address - limited to 255 chars using maxlenth attribute-->
+                            <InputGroup Label="Address" Colspan="12" ContainerClass="col-lg-6 px-0 py-1">
+                                <InputText class="form-control form-control-sm" @bind-Value="@context.StreetAddress" maxlength="255" />
+                            </InputGroup>
+                            <!--Street Address 2 - limited to 255 chars using maxlenth attribute-->
+                            <InputGroup Label="Address 2" Colspan="12" ContainerClass="col-lg-6 px-0 py-1">
+                                <InputText class="form-control form-control-sm" @bind-Value="@context.StreetAddress2" maxlength="255" />
+                            </InputGroup>
+                            <!--City - limited to 255 chars using maxlenth attribute-->
+                            <InputGroup Label="City" Colspan="12" ContainerClass="col-lg-6 px-0 py-1">
+                                <InputText class="form-control form-control-sm" @bind-Value="@context.City" maxlength="255" />
+                            </InputGroup>
+                            <!--State - limited to 255 chars using maxlenth attribute-->
+                            <InputGroup Label="State" Colspan="12" ContainerClass="col-lg-6 px-0 py-1">
+                                <InputText class="form-control form-control-sm" @bind-Value="@context.State" maxlength="255" />
+                            </InputGroup>
+                            <!--Postal Code - limited to 32 chars using maxlenth attribute-->
+                            <InputGroup Label="Postal Code" Colspan="12" ContainerClass="col-lg-6 px-0 py-1">
+                                <InputText class="form-control form-control-sm" @bind-Value="@context.PostalCode" maxlength="32" />
+                            </InputGroup>
+                            <!--Phone Number - limited to 32 chars using maxlenth attribute-->
+                            <InputGroup Label="Phone Number" Colspan="12" ContainerClass="col-lg-6 px-0 py-1">
+                                <InputText class="form-control form-control-sm" @bind-Value="@context.PhoneNumber" maxlength="32" />
+                            </InputGroup>
+                            <!--Payment Terms - limited to 255 chars using maxlenth attribute-->
+                            <InputGroup Label="Payment Terms" Colspan="12" ContainerClass="col-lg-6 px-0 py-1">
+                                <InputText class="form-control form-control-sm" @bind-Value="@context.PaymentTerms" maxlength="255" />
+                            </InputGroup>
+                            <!--Billing Rate - money -->
+                            <InputGroup Label="Billing Rate" Colspan="12" ContainerClass="col-lg-6 px-0 py-1">
+                                <InputCurrency @bind-Value="@context.BillingRate"
+                                               class="form-control form-control-sm w-100 bg-white text-right" />
+                            </InputGroup>
+                            <!--Notes [TextArea]-->
+                            <InputGroup Label="Notes" Colspan="12" ContainerClass="col-lg-6 px-0 py-1">
+                                <InputTextArea class="form-control form-control-sm" @bind-Value="@context.Notes" />
+                            </InputGroup>
+                            <!--Active [Checkbox]-->
+                            <div class="ml-3 py-1">
+                                <InputGroupCheckbox @bind-Value="@context.Active"
+                                                    Label="Active"
+                                                    ContainerClass="pr-1 w-auto" />
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </EditFields>
+        </ManagementPage>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    [CascadingParameter(Name = "MainLayout")]
+    public MainLayout MainLayout { get; set; }
+
+    [Parameter]
+    public int ClientId { get; set; }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        // the AuthorizedFluidContainer component inside ManagementPage tries to hide the progress bar
+        // but doesn't do a good job for this page, probably because it's so simple and loads in one render
+        // so explicitly hide the progress bar after render
+        MainLayout.HideProgressBar();
+    }
+}

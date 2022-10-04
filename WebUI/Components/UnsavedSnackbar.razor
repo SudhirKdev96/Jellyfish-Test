@@ -1,0 +1,55 @@
+﻿<!-- Unsaved Changes Snackbar (notification) -->
+
+<MatSnackbar @bind-IsOpen="@_snackBarIsOpen" Timeout="-1">
+    <MatSnackbarContent>@GetContent()</MatSnackbarContent>
+    @if (!SaveDisabled)
+    {
+        <MatSnackbarActions>
+            <button type="submit" class="btn btn-primary">Save</button>
+        </MatSnackbarActions>
+    }
+</MatSnackbar>
+
+@code {
+    private bool _snackBarIsOpen { get; set; }
+
+    [Parameter]
+    public EditContext editContext { get; set; }
+
+    [Parameter]
+    public bool SaveDisabled { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _snackBarIsOpen = false;
+        // add editContext onchange event handler
+        // add OnFieldChanged event handler
+        editContext.OnFieldChanged += EditContext_OnFieldChanged;
+        base.OnInitialized();
+    }
+
+    // TODO: editContext event handler:
+    /* editContext event handlers */
+    private void EditContext_OnFieldChanged(object sender, FieldChangedEventArgs e)
+    {
+        // Note: The OnFieldChanged event is raised for each field in the EditForm
+        _snackBarIsOpen = true;
+    }
+
+    public void Hide()
+    {
+        _snackBarIsOpen = false;
+    }
+
+    public void Show()
+    {
+        _snackBarIsOpen = true;
+    }
+
+    private string GetContent()
+    {
+        return SaveDisabled ?
+            "Changes cannot currently be saved." :
+            "You have unsaved changes.";
+    }
+}

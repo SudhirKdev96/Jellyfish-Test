@@ -1,0 +1,52 @@
+﻿@using MatBlazor
+
+@if (_isOpen)
+{
+    <MatDialog @bind-IsOpen="_isOpen" Style="z-index: 10000;">
+        <MatDialogContent Class="@ContentClass">
+            <div style="@ContentStyle">
+                @DialogContent
+            </div>
+        </MatDialogContent>
+        <MatDialogActions Class="@ActionsClass">
+            @DialogActions
+        </MatDialogActions>
+    </MatDialog>
+}
+
+
+@code {
+    [Parameter]
+    public RenderFragment DialogContent { get; set; }
+
+    [Parameter]
+    public string ContentClass { get; set; }
+
+    [Parameter]
+    public RenderFragment DialogActions { get; set; }
+
+    [Parameter]
+    public string ActionsClass { get; set; }
+
+    [Parameter]
+    public string ContentStyle { get; set; }
+
+    // flag to open/close the MatDialog
+    private bool _isOpen { get; set; }
+
+    public void Open() {
+        _isOpen = true;
+    }
+
+    public void Close()
+    {
+        _isOpen = false;
+    }
+
+    public bool Toggle()
+    {
+        _isOpen = !_isOpen;
+        // toggle the dialog open state, return the end state
+        return _isOpen;
+    }
+}

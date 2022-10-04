@@ -1,0 +1,264 @@
+@import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
+
+html, body {
+    font-family: 'Font Awesome 5 Free','Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+h1:focus {
+    outline: none;
+}
+
+.fa span, .fas span {
+    font-weight: normal;
+}
+
+a, .btn-link {
+    color: #0366d6;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #1b6ec2;
+    border-color: #1861ac;
+}
+
+.page {
+    font-family: 'Font Awesome 5 Free';
+}
+
+.content {
+    padding-top: 1.1rem;
+}
+
+.valid.modified:not([type=checkbox]) {
+    outline: 1px solid #26b050;
+}
+
+.invalid {
+    outline: 1px solid red;
+}
+
+.validation-message {
+    color: red;
+}
+
+#blazor-error-ui {
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+    #blazor-error-ui .dismiss {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }
+
+    .blazor-error-boundary {
+        background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxyZWN0IHg9IjIzNSIgeT0iNTEiIHdpZHRoPSI1NiIgaGVpZ2h0PSI0OSIvPjwvY2xpcFBhdGg+PC9kZWZzPjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMCkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMzUgLTUxKSI+PHBhdGggZD0iTTI2My41MDYgNTFDMjY0LjcxNyA1MSAyNjUuODEzIDUxLjQ4MzcgMjY2LjYwNiA1Mi4yNjU4TDI2Ny4wNTIgNTIuNzk4NyAyNjcuNTM5IDUzLjYyODMgMjkwLjE4NSA5Mi4xODMxIDI5MC41NDUgOTIuNzk1IDI5MC42NTYgOTIuOTk2QzI5MC44NzcgOTMuNTEzIDI5MSA5NC4wODE1IDI5MSA5NC42NzgyIDI5MSA5Ny4wNjUxIDI4OS4wMzggOTkgMjg2LjYxNyA5OUwyNDAuMzgzIDk5QzIzNy45NjMgOTkgMjM2IDk3LjA2NTEgMjM2IDk0LjY3ODIgMjM2IDk0LjM3OTkgMjM2LjAzMSA5NC4wODg2IDIzNi4wODkgOTMuODA3MkwyMzYuMzM4IDkzLjAxNjIgMjM2Ljg1OCA5Mi4xMzE0IDI1OS40NzMgNTMuNjI5NCAyNTkuOTYxIDUyLjc5ODUgMjYwLjQwNyA1Mi4yNjU4QzI2MS4yIDUxLjQ4MzcgMjYyLjI5NiA1MSAyNjMuNTA2IDUxWk0yNjMuNTg2IDY2LjAxODNDMjYwLjczNyA2Ni4wMTgzIDI1OS4zMTMgNjcuMTI0NSAyNTkuMzEzIDY5LjMzNyAyNTkuMzEzIDY5LjYxMDIgMjU5LjMzMiA2OS44NjA4IDI1OS4zNzEgNzAuMDg4N0wyNjEuNzk1IDg0LjAxNjEgMjY1LjM4IDg0LjAxNjEgMjY3LjgyMSA2OS43NDc1QzI2Ny44NiA2OS43MzA5IDI2Ny44NzkgNjkuNTg3NyAyNjcuODc5IDY5LjMxNzkgMjY3Ljg3OSA2Ny4xMTgyIDI2Ni40NDggNjYuMDE4MyAyNjMuNTg2IDY2LjAxODNaTTI2My41NzYgODYuMDU0N0MyNjEuMDQ5IDg2LjA1NDcgMjU5Ljc4NiA4Ny4zMDA1IDI1OS43ODYgODkuNzkyMSAyNTkuNzg2IDkyLjI4MzcgMjYxLjA0OSA5My41Mjk1IDI2My41NzYgOTMuNTI5NSAyNjYuMTE2IDkzLjUyOTUgMjY3LjM4NyA5Mi4yODM3IDI2Ny4zODcgODkuNzkyMSAyNjcuMzg3IDg3LjMwMDUgMjY2LjExNiA4Ni4wNTQ3IDI2My41NzYgODYuMDU0N1oiIGZpbGw9IiNGRkU1MDAiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvZz48L3N2Zz4=) no-repeat 1rem/1.8rem, #b32121;
+        padding: 1rem 1rem 1rem 3.7rem;
+        color: white;
+    }
+    
+        .blazor-error-boundary::after {
+            content: "An error has occurred."
+        }
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 22px;
+}
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        -webkit-transition: .4s;
+        transition: .4s;
+    }
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+    -webkit-transform: translateX(22px);
+    -ms-transform: translateX(22px);
+    transform: translateX(22px);
+}
+
+/* Rounded sliders */
+.slider.round {
+    border-radius: 22px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+/* Report Controls */
+.btn-pdf, .btn-pdf.disabled, .btn-pdf:disabled {
+    color: #a30900;
+    background-color: transparent;
+    border-color: #a30900;
+}
+
+.btn-pdf:not(:disabled):not(.disabled):hover {
+    color: #fff;
+    background-color: #c90b00;
+    border-color: #a30900;
+}
+
+.btn-pdf:not(:disabled):not(.disabled):active {
+    color: #fff;
+    background-color: #a30900;
+    border-color: #700701;
+}
+
+.btn-csv, .btn-csv.disabled, .btn-csv:disabled {
+    color: #006100;
+    background-color: transparent;
+    border-color: #006100;
+}
+
+.btn-csv:not(:disabled):not(.disabled):hover {
+    color: #fff;
+    background-color: #008000;
+    border-color: #006100;
+}
+
+.btn-csv:not(:disabled):not(.disabled):active {
+    color: #fff;
+    background-color: #006100;
+    border-color: #014201;
+}
+
+.input-group-text.inverted-colors {
+    color: #e9ecef;
+    background-color: #495057;
+}
+
+
+/* 
+    The standard zblazor css has some weirdly overagressive rules for every single div under it.
+    This ensures that the divs under the selected item in the list are styled with the appropriate highlight.
+*/
+.zb-quick-autocomplete-items-scrollable div.zb-quick-autocomplete-active div,
+.zb-quick-autocomplete-items-scrollable div.zb-quick-autocomplete-active.zb-quick-autocomplete-active:hover div {
+    background-color: #5791F5;
+    color: #ffffff;
+}
+
+.zb-quick-autocomplete-items-scrollable div.zb-quick-autocomplete-item:hover div {
+    background-color: #e9e9e9;
+}
+
+/* Since Sharon likes that sidebar color so much */
+.purple-gradient {
+    background-image: linear-gradient(to right, rgb(5, 39, 103) 0%, #3a0647 70%);
+}
+
+/* 
+    prevent mat dialogs from cutting off autocomplete dropdowns
+    (because the attribute options aren't robust enough to do it that way)
+*/
+.mdc-dialog__surface, .mdc-dialog__content {
+    overflow: unset !important;
+}
+
+/* set minimum pixel width */
+.mw-500px {
+    min-width: 500px;
+}
+
+/* convenience for setting relative font size */
+.font-75 {
+    font-size: 75%;
+}
+
+/* hide these checkmarks by default, then show when their row is selected */
+td.selected-checkmark {
+    font-size: 0;
+}
+.table-active td.selected-checkmark {
+    font-size: inherit;
+}
+
+/* the default highlight color when selecting a BlazorTable row SUCKS (grey-against-grey) */
+.table-active, .table-active > td, .table-active > th {
+    background-color: rgba(34, 21, 85, .30) !important;
+    font-weight: bold;
+}
+
+/* Give user the finger */
+.table-selectable tr {
+    cursor: pointer;
+}
+
+/* better hover highlighting when a row is selectable */
+.table-selectable .table-hover tbody tr:hover {
+    color: #eee;
+    background-color: rgba(34, 21, 85, .70);
+}
+
+/* word-wrapping preferences */
+.pre-wrap {
+    white-space: pre-wrap;
+}
+
+.badge {
+    font-weight: inherit;
+}
+
+/* 
+    workaround for disappearing scrollbars due to MatDialog 
+    see https://github.com/SamProf/MatBlazor/issues/829
+*/
+body.mdc-dialog-scroll-lock {
+    overflow: inherit;
+}
+
+/* the default pagination elements on BlazorTables are too damn big */
+.pagination {
+    font-size: .75rem;
+}
+
+/* make text in calendar selectors a little smaller than default */
+.flatpickr-calendar {
+    font-size: 12px;
+}

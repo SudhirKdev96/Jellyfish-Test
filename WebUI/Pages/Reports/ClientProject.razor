@@ -1,0 +1,258 @@
+﻿@page "/report/clientproject"
+@inherits ReportBase
+
+@using WebUI.Components
+@using WebUI.Components.Forms
+@using WebUI.Services
+@using iTextSharp.text
+@using WebUI.Data.Models.Reports
+@using WebUI.Pdf
+@using System.Text
+@using System.Diagnostics
+@using BlazorTable
+
+
+@inject IMatToaster _toaster
+@inject PdfService _pdfService
+
+@attribute [Authorize(Roles = "SuperAdmin,Admin")]
+
+<ReportPage @ref="_page"
+            Roles="SuperAdmin,Admin"
+            Title="Client Project Report"
+            TOptions="ClientProjectReportOptions"
+            ReportOptions="_options"
+            HasData="ReportHasData"
+            DoExportCsv="true"
+            OnExportCsv="CsvExport"
+            DoExportPdf="true"
+            OnExportPdf="PdfExport"
+            DoPreview="true"
+            OnPreview="LoadReportDataAsync">
+
+    <OptionsSection>
+
+        <InputGroupCheckbox ContainerClass="pb-2 ml-3"
+                            @bind-Value="_options.AllClients"
+                            Label="Include Projects for All Clients" />
+
+        @if (!_options.AllClients)
+        {
+            <InputGroup Label="Client" Colspan="6" ContainerClass="pb-2">
+                <AutocompleteEntity Placeholder="Client" TItem="Client" @bind-Value="@_options.ClientId" ContainerClass="w-100" @ref="@_clientAutocomplete" />
+            </InputGroup>
+        }
+    </OptionsSection>
+
+    <PreviewSection>
+        <ReportDataPreview Title="Public" HasData="HasPublicTransactions">
+            <Table @ref="_previewTable" TableItem="ClientProjectRow" Items="@_clientProjectRows" PageSize="10">
+                <MgmtTableCol TItem="ClientProjectRow" Title="Client" Field="@(x => x.ClientName)" DefaultSortColumn="true"/>
+                <MgmtTableCol TItem="ClientProjectRow" Title="Project" Field="@(x => x.ProjectName)" />
+                <MgmtTableCol TItem="ClientProjectRow" Title="Start Date" Field="@(x => x.StartDate)" CanFilter="false" />
+                <MgmtTableCol TItem="ClientProjectRow" Title="End Date" Field="@(x => x.EndDate)" CanFilter="false" />
+                <MgmtTableCol TItem="ClientProjectRow" Title="Estimated Revenue" Field="@(x => x.EstimatedRevenue)"
+                              Format="c2" Align="Align.Right" CanFilter="false" />
+                <Pager ShowPageNumber="true" ShowTotalCount="false" />
+            </Table>
+        </ReportDataPreview>
+    </PreviewSection>
+</ReportPage>
+
+
+@code {
+    #region Private Fields
+    // a reference to the generic ReportPage component
+    private ReportPage<ClientProjectReportOptions> _page;
+
+    // a reference to the component for selecting a party
+    private AutocompleteEntity<Client> _clientAutocomplete;
+
+    // transaction data for the selected options
+    private List<ClientProjectRow> _clientProjectRows;
+
+    // a reference to the previewed-data table component
+    private Table<ClientProjectRow> _previewTable;
+
+    // the user-selected options
+    private ClientProjectReportOptions _options;
+
+    // the footnote to display in the preview and the PDF output
+    private string _footnote = $"Example Report Footnote. Report Generated {DateTime.Now.ToString()}.";
+    #endregion
+
+    protected override void OnParametersSet()
+    {
+        if (_options == null)
+        {
+            _options = new ClientProjectReportOptions();
+        }
+    }
+
+    /// <summary>
+    /// Fetches transactions based on user-selected criteria
+    /// </summary>
+    private async Task LoadReportDataAsync()
+    {
+        if (!ValidateOptions(false)) return;
+
+        System.Diagnostics.Debug.WriteLine($"loading data with {_options}");
+
+        _page.SetStatus("Loading public transactions . . .");
+        _clientProjectRows = await Service.GetClientProjectDataAsync(_options);
+
+        _page.SetStatus(ReportHasData() ? null : "No data to show");
+    }
+
+    /// <summary>
+    /// are there any public transactions loaded?
+    /// </summary>
+    private bool HasPublicTransactions()
+    {
+        return (_clientProjectRows?.Count ?? 0) > 0;
+    }
+
+    /// <summary>
+    /// Are there any transactions loaded at all?
+    /// </summary>
+    private bool ReportHasData()
+    {
+        // this method is useful when there are multiple datasets to load
+        return HasPublicTransactions();
+    }
+
+    /// <summary>
+    /// Validate the user-selected options and prompt the user if they don't validate.
+    /// </summary>
+    /// <param name="requireData">Does this validation expect data to already be loaded?</param>
+    /// <returns>whether or not the options validated successfully</returns>
+    private bool ValidateOptions(bool requireData)
+    {
+        string err = null;
+        // if all options isn't checked
+        if (!_options.AllClients)
+        {
+            // if a client hasn't been selected
+            if ((_options.ClientId ?? 0) <= 0)
+            {
+                err = "Choose a Client or select All Clients";
+            }
+        }
+        else if (requireData && !ReportHasData())
+        {
+            err = "No data to export";
+        }
+        if (err == null)
+        {
+            return true;
+        }
+        else
+        {
+            _toaster.Add(err, MatToastType.Warning);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Generate and download a CSV file
+    /// </summary>
+    /// <returns></returns>
+    private async Task CsvExport()
+    {
+        if (!ValidateOptions(true)) return;
+
+        var bytes = _previewTable.ToCsv();
+        await _pdfService.Download(bytes, "CapitalGainLoss.csv");
+    }
+
+    /// <summary>
+    /// export transactions to PDF
+    /// </summary>
+    public async Task PdfExport()
+    {
+        try
+        {
+            // load data from the DB
+            if (!ReportHasData()) await LoadReportDataAsync();
+
+            // bail if there's still nothing to show
+            if (!ReportHasData()) return;
+
+            // prepare report options for the different giving types
+            var pdfPublicOptions = PrepPdfPublicOptions();
+
+            _page.SetStatus("Building PDF . . .");
+
+            // set the document title based on the selected options
+            var title = "Project Report";
+
+            // build this report in landscape
+            var docOptions = new PdfDocumentOptions() { Title = title.ToString(), UseLandscapeOrientation = true };
+
+            // build and download the PDF
+            using (var pdfBuilder = _pdfService.StartPdf(docOptions))
+            {
+                // render in data of both giving types
+                pdfBuilder.AddDataSet(pdfPublicOptions);
+
+                // add the footnote
+                pdfBuilder.AddText(_footnote);
+
+                // download the PDF
+                _page.SetStatus("Downloading PDF . . .");
+                await _pdfService.Download(pdfBuilder, "PortfolioValue.pdf");
+            }
+
+            _page.ClearStatus();
+        }
+        catch (Exception e)
+        {
+            Debug.WriteLine($"Unexpected error: {e.Message}");
+            _page.SetStatus("An unexpected error occurred");
+        }
+    }
+
+    private PdfDataSetOptions<ClientProjectRow> PrepPdfPublicOptions()
+    {
+        #region Groupings
+        var grpHeading = new PdfSimpleGrouping<ClientProjectRow>("Projects");
+        var grpAccount = new PdfGrouping<ClientProjectRow>(x => x.ClientName);
+
+        var groupings = new List<PdfGrouping<ClientProjectRow>>()
+        {
+            grpHeading,
+            grpAccount
+        };
+        #endregion
+
+        #region Columns
+        var colClientName = new PdfColumnDef<ClientProjectRow>(x => x.ClientName, "Client", 24);
+        var colProjectName = new PdfColumnDef<ClientProjectRow>(x => x.ProjectName, "Project", 10);
+        var colStartDate = new PdfColumnDef<ClientProjectRow>(x => x.StartDate, "Start Date", 10);
+        var colEndDate = new PdfColumnDef<ClientProjectRow>(x => x.EndDate, "End Date", 10);
+        var colEstimatedRevenue = new PdfColumnDef<ClientProjectRow>(x => x.EstimatedRevenue, "Estimated Revenue", 10)
+        {
+            Aggregate = rows => rows.Sum(row => row.EstimatedRevenue)
+        };
+
+        var columnDefs = new List<PdfColumnDef<ClientProjectRow>>()
+        {
+            colClientName,
+            colProjectName,
+            colStartDate,
+            colEndDate,
+            colEstimatedRevenue
+        };
+        #endregion
+
+        var opts = new PdfDataSetOptions<ClientProjectRow>()
+        {
+            Data = _clientProjectRows,
+            Groupings = groupings.ToArray(),
+            Columns = columnDefs.ToArray(),
+            SortData = rows => rows.OrderBy(x => x.ClientName).ThenBy(x => x.ProjectName)
+        };
+
+        return opts;
+    }
+}

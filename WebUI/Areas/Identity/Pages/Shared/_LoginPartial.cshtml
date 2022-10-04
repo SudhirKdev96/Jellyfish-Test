@@ -1,0 +1,42 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using WebUI.Data
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<ul class="navbar-nav">
+    @if (SignInManager.IsSignedIn(User))
+    {
+        <li class="nav-item">
+            <form class="form-inline" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage" method="get">
+                <button type="submit" class="nav-link btn btn-link text-dark">
+                    <span class="oi oi-person" style="color: #6b6f6d;"></span>&nbsp;Account
+                </button>
+            </form>
+        </li>
+        <li class="nav-item">
+            <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/" method="post">
+                <button type="submit" class="nav-link btn btn-link text-dark">
+                    <span class="oi oi-account-logout" style="color: #6b6f6d;"></span>&nbsp;Logout
+                </button>
+            </form>
+        </li>
+        if (User.IsInRole("Admin"))
+        {
+            <li class="nav-item">
+                <form class="form-inline" asp-area="Identity" asp-page="/Admin/Index" asp-route-returnUrl="/" method="get">
+                    <button type="submit" class="nav-link btn btn-link text-dark">
+                        <span class="oi oi-lock-locked" style="color: #11dd88;"></span>&nbsp;Admin
+                    </button>
+                </form>
+            </li>
+        }
+    }
+    else
+    {
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Login">Login</a>
+        </li>
+    }
+</ul>
+

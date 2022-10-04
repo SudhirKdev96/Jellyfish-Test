@@ -1,0 +1,136 @@
+﻿<!-- A Snackbar Notification shown when a form is dirty, useful for making unsaved changes et al obvious to users -->
+
+<MatSnackbar @bind-IsOpen="@_snackBarIsOpen" Timeout="-1">
+    <MatSnackbarContent>@GetContent()</MatSnackbarContent>
+    @if (!IsSubmitDisabled)
+    {
+        <MatSnackbarActions>
+            <button type="submit" class="btn btn-primary">@ButtonText</button>
+        </MatSnackbarActions>
+    }
+</MatSnackbar>
+
+@code {
+    private bool _snackBarIsOpen { get; set; }
+
+    // get the edit context for free for any component under an edit form (or anything else that has an EditContext)
+    [CascadingParameter]
+    public EditContext EditContext { get; set; }
+
+    /// <summary>
+    /// Prevent submission directly from the snackbar?
+    /// </summary>
+    [Parameter]
+    public bool IsSubmitDisabled { get; set; }
+
+    /// <summary>
+    /// The type of form submission being tracked. Affects what's displayed on the snackbar
+    /// </summary>
+    [Parameter]
+    public string SubmitType { get; set; }
+
+    /// <summary>
+    /// Text to display when submission is enabled from the snackbar
+    /// </summary>
+    [Parameter]
+    public string EnabledText { get; set; }
+
+    /// <summary>
+    /// Text to display when submission is disabled from the snackbar
+    /// </summary>
+    [Parameter]
+    public string DisabledText { get; set; }
+
+    /// <summary>
+    /// Text to display on the submit button
+    /// </summary>
+    [Parameter]
+    public string ButtonText { get; set; }
+
+
+    protected override void OnInitialized()
+    {
+        // this component is useless without an edit context
+        if (EditContext == null)
+        {
+            throw new NullReferenceException(nameof(EditContext));
+        }
+
+        // set the right text for the situation
+        SetContent();
+
+        // add editContext onchange event handler
+        // add OnFieldChanged event handler
+        EditContext.OnFieldChanged += EditContext_OnFieldChanged;
+
+        base.OnInitialized();
+    }
+
+    /* editContext event handlers */
+    private void EditContext_OnFieldChanged(object sender, FieldChangedEventArgs e)
+    {
+        // Note: The OnFieldChanged event is raised for each field in the EditForm
+        Show();
+    }
+
+    /// <summary>
+    /// consolidate actions that need to happen when the snackbar opens or closes
+    /// </summary>
+    private void SetIsOpen(bool isOpen)
+    {
+        // if this isn't a new state, there's nothing to do
+        if (_snackBarIsOpen == isOpen) return;
+
+        // set the new state
+        _snackBarIsOpen = isOpen;
+
+        // tell the UI to re-render
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Get rid of this alert, if it's currently shown
+    /// </summary>
+    public void Hide()
+    {
+        SetIsOpen(false);
+    }
+
+    /// <summary>
+    /// Bring up an alert, if it's not already shown
+    /// </summary>
+    public void Show()
+    {
+        SetIsOpen(true);
+    }
+
+    /// <summary>
+    /// Set the various text elements for this alert
+    /// </summary>
+    private void SetContent()
+    {
+        switch (SubmitType)
+        {
+            case "Preview":
+                EnabledText = "Your options have changed.";
+                DisabledText = "You cannot currently preview.";
+                ButtonText = "Refresh Preview";
+                break;
+
+            // defaults to this wording because it was initially just a notification of unsaved changes
+            default:
+                EnabledText = "You have unsaved changes.";
+                DisabledText = "Changes cannot currently be saved.";
+                ButtonText = "Save";
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Get the text to show on the snackbar depending on its state
+    /// </summary>
+    private string GetContent()
+    {
+        return IsSubmitDisabled ? DisabledText : EnabledText;
+    }
+}

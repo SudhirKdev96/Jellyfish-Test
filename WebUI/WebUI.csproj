@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="Windows-1252"?>
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+      <TargetFramework>net6.0</TargetFramework>
+      <!--https://docs.microsoft.com/en-us/dotnet/core/compatibility/aspnet-core/6.0/identity-bootstrap4-to-5#recommended-action-->
+      <IdentityUIFrameworkVersion>Bootstrap4</IdentityUIFrameworkVersion>
+      <Nullable>enable</Nullable>
+      <ImplicitUsings>enable</ImplicitUsings>  
+      <UserSecretsId>aspnet-WebUI-0E94CF4E-A6D4-4FCD-ABA2-66B3DB8F6239</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Data\Migrations\20200416192315_Scaffold2FACode.cs" />
+    <Compile Remove="Data\Migrations\20200416192315_Scaffold2FACode.Designer.cs" />
+    <Compile Remove="Data\Migrations\20201110235404_DemoModels.cs" />
+    <Compile Remove="Data\Migrations\20201110235404_DemoModels.Designer.cs" />
+    <Compile Remove="Data\Migrations\20201111000517_DemoModels.cs" />
+    <Compile Remove="Data\Migrations\20201111000517_DemoModels.Designer.cs" />
+    <Compile Remove="Data\Migrations\20201111001209_DemoModels.cs" />
+    <Compile Remove="Data\Migrations\20201111001209_DemoModels.Designer.cs" />
+    <Compile Remove="Data\Migrations\20201111022256_DemoModels.cs" />
+    <Compile Remove="Data\Migrations\20201111022256_DemoModels.Designer.cs" />
+  </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Blazorise.Bootstrap" Version="1.0.6" />
+        <PackageReference Include="Blazorise.Icons.FontAwesome" Version="1.0.6" />
+        <PackageReference Include="BlazorTable" Version="1.14.0" />
+        <PackageReference Include="iTextSharp.LGPLv2.Core" Version="1.6.7" />
+        <PackageReference Include="MailKit" Version="2.11.1" />
+        <PackageReference Include="MatBlazor" Version="2.6.2" />
+        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="6.0.8" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.8" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="6.0.8" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.8" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.8">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.8" />
+        <PackageReference Include="SendGrid" Version="9.20.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ZBlazor\ZBlazor.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="wwwroot\images\" />
+    </ItemGroup>
+
+</Project>

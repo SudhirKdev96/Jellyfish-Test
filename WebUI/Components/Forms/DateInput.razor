@@ -1,0 +1,82 @@
+﻿@using Blazorise
+
+@typeparam TValue
+
+@*Convenience component that wraps a Blazorise DatePicker in order to set common app-wide defaults*@
+ <DatePicker TValue="@TValue" 
+             @bind-Date="@Value" 
+             DisplayFormat="MM/dd/yyyy"
+             Placeholder="@Placeholder"
+             Class="@Class"
+             Disabled="@Disabled" 
+             FocusOut="@OnFocusOut"
+             Attributes="@Attributes" 
+             Size="@Size" />
+
+
+@code {
+    /// <summary>
+    /// The date value to bind. Generic to be flexible with <c>DateTime<c> or <c>DateTime?<c>
+    /// </summary>
+    [Parameter]
+    public TValue Value
+    {
+        get => _value;
+        set
+        {
+            if (value.Equals(_value)) { return; }
+
+            _value = value;
+
+            ValueChanged.InvokeAsync(value);
+        }
+    }
+
+    [Parameter]
+    public EventCallback<TValue> ValueChanged { get; set; }
+
+    /// <summary>
+    /// The way the input displays and parses dates to/from text
+    /// </summary>
+    [Parameter]
+    public string DisplayFormat { get; set; } = "MM/dd/yyyy";
+
+    /// <summary>
+    /// Optional placeholder text when the input is empty
+    /// </summary>
+    [Parameter]
+    public string Placeholder { get; set; }
+
+    /// <summary>
+    /// Optional CSS classes to add
+    /// </summary>
+    [Parameter]
+    public string Class { get; set; }
+
+    /// <summary>
+    /// Whether or not the input is disabled for user editing
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Optional action to take when focus leaves the input
+    /// </summary>
+    [Parameter]
+    public EventCallback<FocusEventArgs> OnFocusOut { get; set; }
+
+    /// <summary>
+    /// Captures additional custom attributes
+    /// </summary>
+    [Parameter]
+    public Dictionary<string, object> Attributes { get; set; }
+
+    /// <summary>
+    /// Sets the size of the input control. Defaults to small
+    /// </summary>
+    [Parameter]
+    public Size? Size { get; set; } = Blazorise.Size.Small;
+
+
+    private TValue _value;
+}

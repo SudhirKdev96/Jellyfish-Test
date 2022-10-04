@@ -1,0 +1,45 @@
+﻿@* A section of a ReportPage for previewing a set of data *@
+
+<div class="@GetPreviewCardClass()">
+
+    @if (_showTitle)
+    {
+        <div class="card-header text-center font-weight-bold">@Title</div>
+    }
+
+    <div class="card-body p-0 font-75">
+
+        @ChildContent
+
+    </div>
+
+</div>
+
+@code {
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    /// <summary>
+    /// The set of data this report is based on
+    /// </summary>
+    [Parameter]
+    public Func<bool> HasData { get; set; }
+
+    /// <summary>
+    /// Optional title for this section. If set, a card header will be added showing this title.
+    /// </summary>
+    [Parameter]
+    public string Title { get; set; }
+
+    // convenience property to decide if a title is to be shown
+    private bool _showTitle => !String.IsNullOrWhiteSpace(Title);
+
+    /// <summary>
+    /// picks the css classes for the preview card based on the data state
+    /// </summary>
+    private string GetPreviewCardClass()
+    {
+        string classes = "card bg-light";
+        return (HasData()) ? classes : $"{classes} d-none";
+    }
+}

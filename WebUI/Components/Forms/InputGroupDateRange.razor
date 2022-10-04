@@ -1,0 +1,78 @@
+﻿@using WebUI.Data.Interfaces
+
+<InputGroup Label="@Label" Colspan="@Colspan" ContainerClass="@CssClass" BoldLabel="@BoldLabel">
+    <DateInput TValue="DateTime?" @bind-Value="@FromDate" />
+    <span class="input-group-text">to</span>
+    <DateInput TValue="DateTime?" @bind-Value="@ToDate" />
+</InputGroup>
+
+@code {
+    /// <summary>
+    /// label text show at the left end of this input group
+    /// </summary>
+    [Parameter]
+    public string Label { get; set; }
+
+    /// <summary>
+    /// make the label bold?
+    /// </summary>
+    [Parameter]
+    public bool BoldLabel { get; set; }
+
+    /// <summary>
+    /// optional bootstrap column span. Valid values are 1 through 12, inclusive.
+    /// </summary>
+    [Parameter]
+    public int Colspan { get; set; } = 12;
+
+    /// <summary>
+    /// optional class string to add on to the input group div
+    /// </summary>
+    [Parameter]
+    public string CssClass { get; set; }
+
+    /// <summary>
+    /// The lower bound of this date range.
+    /// </summary>
+    [Parameter]
+    public DateTime? FromDate
+    {
+        get => _fromDate;
+        set
+        {
+            if (value == _fromDate) return;
+
+            _fromDate = value;
+
+            FromDateChanged.InvokeAsync(value);
+        }
+    }
+
+    [Parameter]
+    public EventCallback<DateTime?> FromDateChanged { get; set; }
+
+    /// <summary>
+    /// The upper bound of this date range.
+    /// </summary>
+    [Parameter]
+    public DateTime? ToDate
+    {
+        get => _toDate;
+        set
+        {
+            if (value == _toDate) return;
+
+            _toDate = value;
+
+            ToDateChanged.InvokeAsync(value);
+        }
+    }
+
+    [Parameter]
+    public EventCallback<DateTime?> ToDateChanged { get; set; }
+
+
+    // Private variables
+    private DateTime? _fromDate;
+    private DateTime? _toDate;
+}

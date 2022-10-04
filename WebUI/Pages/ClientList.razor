@@ -1,0 +1,10 @@
+﻿@page "/list/client"
+@using WebUI.Components
+@using WebUI.Services
+
+<ManagementListPage TItem="Client"
+                    TService="ServiceBase"
+                    Title="Clients"
+                    IdField="@(x => x.ClientId)"
+                    NameField="@(x => x.Name)"
+                    ManagePath="client" />
