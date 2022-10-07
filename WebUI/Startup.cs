@@ -39,6 +39,7 @@ namespace WebUI
             services.AddServerSideBlazor();
             services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<ApplicationUser>>();
             services.AddTransient<IEmailSender, MailKitEmailSender>();
+            services.AddScoped<UploadLogo>();
             services.Configure<MailKitEmailSenderOptions>(options =>
             {
                 options.Host_Address = Configuration["SMTP:Address"];

@@ -22,9 +22,9 @@ a, .btn-link {
     border-color: #1861ac;
 }
 
-.page {
+/*.page {
     font-family: 'Font Awesome 5 Free';
-}
+}*/
 
 .content {
     padding-top: 1.1rem;
@@ -261,4 +261,19 @@ body.mdc-dialog-scroll-lock {
 /* make text in calendar selectors a little smaller than default */
 .flatpickr-calendar {
     font-size: 12px;
+}
+
+.company-profile .input-group-prepend .input-group-text {
+    height: 38px;
+    border-radius: 4px 0 0 4px;
+    margin-right: -1px;
+}
+.company-profile .input-group-prepend .form-control {
+    border-radius: 0 4px 4px 0;
+    height: 38px;
+}
+.company-profile .upload-form  {
+    display: flex;
+    flex-flow: row-reverse;
+    align-items: center;
 }

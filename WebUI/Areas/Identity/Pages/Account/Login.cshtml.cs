@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -7,24 +8,38 @@ using Microsoft.Extensions.Logging;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using WebUI.Data;
+using WebUI.Data.Enums;
+using WebUI.Data.Models;
+using WebUI.Factory;
+using WebUI.Services;
 
 namespace WebUI.Areas.Identity.Pages.Account
 {
     [AllowAnonymous]
     public class LoginModel : PageModel
     {
+        private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ILogger<LoginModel> _logger;
+        private readonly ServiceFactory _factory;
+        public CompanyService Service { get; set; }
 
         public LoginModel(SignInManager<ApplicationUser> signInManager, 
             ILogger<LoginModel> logger,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager, ServiceFactory factory, IWebHostEnvironment webHostEnvironment)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
+            _factory = factory;
+            _webHostEnvironment = webHostEnvironment;
         }
+
+        [ViewData]
+        public string LogoUrl { get; set; }
+        [ViewData]
+        public string SiteTitle { get; set; }
 
         [BindProperty]
         public InputModel Input { get; set; }
@@ -52,6 +67,16 @@ namespace WebUI.Areas.Identity.Pages.Account
 
         public async Task OnGetAsync(string returnUrl = "/accounts/")
         {
+            Service = Service ?? _factory.CreateCompanyService();
+            var companyProfile = await Service.FindSingleEntity<CompanyProfile>() ?? new CompanyProfile();
+            var basePath = _webHostEnvironment.WebRootPath;
+            if (!string.IsNullOrEmpty(companyProfile.Logo) && System.IO.File.Exists(basePath + EnumExtension.GetDescription(FolderPath.CompanyLogo) + companyProfile.Logo))
+            {
+                byte[] byteArray = System.IO.File.ReadAllBytes(basePath + EnumExtension.GetDescription(FolderPath.CompanyLogo) + companyProfile.Logo);
+                LogoUrl = Convert.ToBase64String(byteArray);
+            }
+            SiteTitle = companyProfile.SiteTitle;
+
             if (!string.IsNullOrEmpty(ErrorMessage))
             {
                 ModelState.AddModelError(string.Empty, ErrorMessage);
@@ -98,5 +123,6 @@ namespace WebUI.Areas.Identity.Pages.Account
             // If we got this far, something failed, redisplay form
             return Page();
         }
+
     }
 }

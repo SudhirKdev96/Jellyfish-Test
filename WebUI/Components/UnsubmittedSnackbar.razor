@@ -9,6 +9,13 @@
         </MatSnackbarActions>
     }
 </MatSnackbar>
+@if (_snackBarIsOpen)
+{
+    <div id="UnsavedChangesActive">
+
+
+    </div>
+}
 
 @code {
     private bool _snackBarIsOpen { get; set; }

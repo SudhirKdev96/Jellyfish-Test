@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="Windows-1252"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
@@ -11,16 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Data\Migrations\20200416192315_Scaffold2FACode.cs" />
-    <Compile Remove="Data\Migrations\20200416192315_Scaffold2FACode.Designer.cs" />
-    <Compile Remove="Data\Migrations\20201110235404_DemoModels.cs" />
-    <Compile Remove="Data\Migrations\20201110235404_DemoModels.Designer.cs" />
-    <Compile Remove="Data\Migrations\20201111000517_DemoModels.cs" />
-    <Compile Remove="Data\Migrations\20201111000517_DemoModels.Designer.cs" />
-    <Compile Remove="Data\Migrations\20201111001209_DemoModels.cs" />
-    <Compile Remove="Data\Migrations\20201111001209_DemoModels.Designer.cs" />
-    <Compile Remove="Data\Migrations\20201111022256_DemoModels.cs" />
-    <Compile Remove="Data\Migrations\20201111022256_DemoModels.Designer.cs" />
+    <Content Remove="wwwroot\Favicon\CompanyManagementPage.razor.cs" />
   </ItemGroup>
 
     <ItemGroup>
@@ -47,6 +38,8 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="wwwroot\CompanyLogo\" />
+      <Folder Include="wwwroot\Favicon\" />
       <Folder Include="wwwroot\images\" />
     </ItemGroup>
 

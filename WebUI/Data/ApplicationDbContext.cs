@@ -16,7 +16,7 @@ namespace WebUI.Data
 
         public virtual DbSet<Client> Clients { get; set; }
         public virtual DbSet<Project> Projects { get; set; }
-
+        public virtual DbSet<CompanyProfile> CompanyProfile { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             // call base.OnModelCreating so Identity Models are configured properly

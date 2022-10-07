@@ -2,7 +2,9 @@
 @namespace WebUI.Pages
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @using Microsoft.AspNetCore.Authorization
+@inject UploadLogo _uploadLogo
 @using Microsoft.AspNetCore.Components.Web
+@using WebUI.Services
 @attribute [Authorize]
 @{
     Layout = null;
@@ -15,6 +17,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="~/" />
     <!-- Blazorize dependencies -->
+    <link rel="shortcut icon" type="image/png" href="data:image/png;base64, @_uploadLogo.GetFaviconUrl()">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" integrity="sha384-zCbKRCUGaJDkqS1kPbPd7TveP5iyJE0EjAuZQTgFLD2ylzuqKfdKlfG/eSrtxUkn" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
     <!-- Blazorize -->
@@ -48,7 +51,35 @@
         <a href="" class="reload">Reload</a>
         <a class="dismiss">🗙</a>
     </div>
-
+    <script>
+    function BlazorSetTitle(title) {
+        document.title = title;
+    }
+</script>
+<script type="text/javascript">
+        window.addEventListener('beforeunload', function (e) {
+            debugger
+            if($('#UnsavedChangesActive').length > 0){
+            e.preventDefault();
+            e.returnValue = '';
+            }
+        });
+        function HasUnsavedChanges(){
+            debugger
+            if($('#UnsavedChangesActive').length > 0)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        function ShowUnsavedAlert(){
+            var isAgreed = confirm("There are unsaved changes. Are you sure to leave the page?")
+            return isAgreed;
+        }
+         </script>
     <script src="_framework/blazor.server.js"></script>
     <script src="~/lib/FileUtils.js"></script>
     <!-- jQuery, popper, bootstrap versions required for blazorize -->

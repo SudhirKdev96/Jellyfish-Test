@@ -1,7 +1,7 @@
 ﻿@using WebUI.Factory
 @using System.Linq.Expressions
 @using WebUI.Data.Interfaces
-@using WebUI.Components.Forms 
+@using WebUI.Components.Forms
 @inject ServiceFactory _factory
 @inject IMatToaster _toaster
 @inject NavigationManager _navigationManager
@@ -10,17 +10,8 @@
 
 
 <h1>@GetTitle()</h1>
-
-<LastModifiedBadge Item="@_item" />
-
 <AuthorizedFluidContainer Roles="@Roles">
     <AuthorizedContent>
-        <!-- Back Button -->
-
-        <div class="row">
-            <button class="btn btn-sm btn-outline-primary m-3" @onclick="BackToList">@BackButtonText</button>
-        </div>
-
         <!-- EditForm -->
 
         <EditForm EditContext="@_editContext" OnValidSubmit="Save">
@@ -31,58 +22,20 @@
 
             <!-- Form Validation -->
             <DataAnnotationsValidator />
-            <ValidationSummary />
 
-            <!-- Save and Delete Buttons -->
+            <!-- Save Button -->
 
             <div class="form-row pl-2 pt-1">
                 <div>
-                    @if (!_isSoftDeleted)
-                    {
-                        // don't allow edits unless they've restored the deleted item
-                        <ActionButton Action="save" MinimizePadding="false" ButtonText="@GetSubmitText()" CssClass="mr-1" />
-                    }
-                    @if (GetItemId() > 0)
-                    {
-                        @if (_isSoftDeleted)
-                        {
-                            <ActionButton Action="restore" IsTextButton="true" MinimizePadding="false" OnClick="Restore" />
-                        }
-                        else
-                        {
-                            <ActionButton Action="delete" IsTextButton="true" MinimizePadding="false" OnClick="OpenDeleteDialog" />
-                        }
-                    }
+                    <ActionButton Action="save" MinimizePadding="false" ButtonText="@GetSubmitText()" CssClass="mr-1" />
                 </div>
             </div>
 
-            <!-- Delete Dialog -->
-
-            <ImprovedMatDialog @ref="@_deleteDialog">
-                <DialogContent>
-                    <div class="row">
-                        <div class="col">
-                            <p class="pt-1">@($"Are you sure you want to delete this {Title}?")</p>
-                        </div>
-                    </div>
-                </DialogContent>
-                <DialogActions>
-                    <button class="btn btn-sm btn-danger btn-sm p-1 m-1" type="button" @onclick="Delete">Delete</button>
-                    <button class="btn btn-sm btn-primary btn-sm p-1 m-1" type="button" @onclick="CloseDeleteDialog">Cancel</button>
-                </DialogActions>
-            </ImprovedMatDialog>
-
             <!-- Unsaved Changes Snackbar (notification) -->
 
-            <UnsubmittedSnackbar @ref="@_unsavedSnackbar" IsSubmitDisabled="@_isSoftDeleted" />
+            <UnsubmittedSnackbar @ref="@_unsavedSnackbar" IsSubmitDisabled="false" />
 
         </EditForm>
-
-        <!-- Back Button -->
-
-        <div class="row">
-            <button class="btn btn-sm btn-outline-primary m-3" @onclick="BackToList">@BackButtonText</button>
-        </div>
     </AuthorizedContent>
     <NotAuthorizedContent>
         <p>You are not authorized to view this page.</p>
@@ -113,7 +66,7 @@
     /// </summary>
     [Parameter]
     public TService Service { get; set; }
-    
+
     [Parameter]
     public Func<TService, TItem> LoadItemOverride { get; set; }
 
@@ -150,10 +103,10 @@
     public string ReturnPath { get; set; }
 
     /// <summary>
-    /// the text to display on the back button(s), defaults to "Back To List"
+    /// the text to display on the back button(s), defaults to "Back To Page"
     /// </summary>
     [Parameter]
-    public string BackButtonText { get; set; } = "Back To List";
+    public string BackButtonText { get; set; } = "Back To Page";
 
     /// <summary>
     /// an optional action to take after the managed item is loaded from the DB
@@ -173,11 +126,14 @@
     [Parameter]
     public Func<TItem, Task<bool>> OnBeforeSaveAsync { get; set; }
 
-    /// <summary>
-    /// an optional function to perform after successfully saving the page
-    /// </summary>
+    ///// <summary>
+    ///// an optional function to perform after successfully saving the page
+    ///// </summary>
+    //[Parameter]
+    //public Func<TItem, bool> OnAfterSave { get; set; }
+
     [Parameter]
-    public Func<TItem, bool> OnAfterSave { get; set; }
+    public EventCallback<(TItem, bool)> OnAfterSaveAsync { get; set; }
 
     /// <summary>
     /// the active edit context for the form on this page
@@ -193,21 +149,15 @@
     // reference to UnsavedSnackbar component
     private UnsubmittedSnackbar _unsavedSnackbar;
 
-    // ref for the delete confirmation dialog
-    private ImprovedMatDialog _deleteDialog { get; set; }
-
-    // is this item an ISoftDeletable that is marked deleted?
-    private bool _isSoftDeleted => (_item as ISoftDeletable)?.Deleted ?? false;
-
     protected async override Task OnInitializedAsync()
     {
+
         // if a service instance wasn't passed in, get a new instance
         Service = Service ?? await _factory.CreateService<TService>();
         // load from database, use a new TItem if that fails
         _item = (LoadItemOverride is not null)
-            ? LoadItemOverride(Service) 
+            ? LoadItemOverride(Service)
             : Service.GetQueryableIncludingDeleted<TItem>(asUntracked: false, filter: Query).Where(IdFieldFilter).FirstOrNew();
-        
         OnItemLoad?.Invoke(_item);
         // instantiate editContext
         _editContext = new EditContext(_item);
@@ -254,58 +204,8 @@
         else
         {
             _toaster.Add($"{Title} saved successfully", MatToastType.Success);
-            OnAfterSave?.Invoke(_item);
+            await OnAfterSaveAsync.InvokeAsync((_item, true));
         }
-    }
-
-    // show the delete confirmation dialog
-    private void OpenDeleteDialog()
-    {
-        _deleteDialog.Open();
-    }
-
-    // delete the selected TItem
-    private async Task Delete()
-    {
-        CloseDeleteDialog();
-        await Service.DeleteAsync(_item);
-        _toaster.Add($"{Title} deleted successfully", MatToastType.Success);
-        // navigate back to list view
-        BackToList();
-    }
-
-    private void CloseDeleteDialog()
-    {
-        _deleteDialog.Close();
-    }
-
-    private async Task Restore()
-    {
-        int result = await Service.RestoreAsync(_item as ISoftDeletable);
-
-        if (result > 0)
-        {
-            _toaster.Add($"{Title} restored successfully", MatToastType.Success);
-        }
-        else
-        {
-            // should never end up here
-            _toaster.Add("This item is not restorable", MatToastType.Danger);
-        }
-    }
-
-    /* helper methods */
-    private void BackToList()
-    {
-        // send the user back to the list view or other requested path
-        var path = ReturnPath.Trim();
-
-        // if the return path has this token in it, replace it with the ID of the entity being managed
-        if (path.Contains("ENTITYITEMID"))
-        {
-            path = path.Replace("ENTITYITEMID", GetItemId().ToString());
-        }
-        _navigationManager.NavigateTo(path);
     }
 
     public int GetItemId()

@@ -1,11 +1,23 @@
-﻿<CascadingAuthenticationState>
+﻿@using System
+@using Microsoft.AspNetCore.Hosting
+@using Services
+@using WebUI.Data.Enums
+@using WebUI.Factory
+@inject ServiceFactory _factory
+@inject AuthenticationStateProvider _authenticationStateProvider
+@inject IMatToaster _toaster
+@inject IWebHostEnvironment Environment
+@inject IJSRuntime JSRuntime
+@inject UploadLogo _uploadLogo
+<CascadingAuthenticationState>
 
     <!--top navbar-->
     <nav class="navbar fixed-top navbar-expand-sm navbar-light navbar-toggleable-sm bg-white border-bottom box-shadow mb-5">
         <!--Logo-->
         <a class="navbar-brand" href="/">
-            <img src="/images/Logo.jpg" height="40" alt="Navbar Logo">
+            <img src="data:image/png;base64, @logoUrl" height="40" alt="Navbar Logo">
         </a>
+        <h5 class="mb-0">@siteTile</h5>
         <!--toggler-->
         <button class="navbar-toggler" @onclick="ToggleTopNav">
             <span class="navbar-toggler-icon"></span>
@@ -39,12 +51,50 @@
 </CascadingAuthenticationState>
 
 @code {
-    private bool collapseTopNav = true;
 
-    private string TopNavCssClass => collapseTopNav ? "collapse" : null;
+    /// <summary>
+    /// Protected Fields
+    /// </summary>
+    #region
+    protected bool collapseTopNav = true;
+    protected CompanyService Service { get; set; }
+    protected string logoUrl = string.Empty;
+    protected string siteTile = string.Empty;
+    protected string TopNavCssClass => collapseTopNav ? "collapse" : null;
+    #endregion
+
+    protected async override Task OnInitializedAsync()
+    {
+        Service = Service ?? _factory.CreateCompanyService();
+        var companyProfile = await Service.FindSingleEntity<CompanyProfile>() ?? new CompanyProfile();
+        var basePath = Environment.WebRootPath;
+        if (!string.IsNullOrEmpty(companyProfile.Logo) && System.IO.File.Exists(basePath + EnumExtension.GetDescription(FolderPath.CompanyLogo) + companyProfile.Logo))
+        {
+            byte[] byteArray = System.IO.File.ReadAllBytes(basePath + EnumExtension.GetDescription(FolderPath.CompanyLogo) + companyProfile.Logo);
+            logoUrl = Convert.ToBase64String(byteArray);
+        }
+        siteTile = companyProfile.SiteTitle;
+        _uploadLogo.OnShow += UpdateLogo;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("BlazorSetTitle", siteTile ?? string.Empty);
+            StateHasChanged();
+        }
+    }
 
     private void ToggleTopNav()
     {
         collapseTopNav = !collapseTopNav;
+    }
+
+    private void UpdateLogo(string url, string title)
+    {
+        logoUrl = url;
+        siteTile = title;
+        StateHasChanged();
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace WebUI.Data.Enums
+﻿using System.ComponentModel;
+
+namespace WebUI.Data.Enums
 {
     // define all enums used by EF models here
 
@@ -14,5 +16,11 @@
         Hourly = 1,
         NonBillable = 2,
         FixedPrice = 3
+    }
+
+    public enum FolderPath
+    {
+        [Description("\\CompanyLogo\\")] CompanyLogo,
+        [Description("\\Favicon\\")] Favicon,
     }
 }

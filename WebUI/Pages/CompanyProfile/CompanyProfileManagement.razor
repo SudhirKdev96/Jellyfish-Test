@@ -1,0 +1,348 @@
+﻿@page "/company/profile/{Id:int?}"
+@using System
+@using System.IO
+@using Microsoft.AspNetCore.Hosting
+@using Services
+@using WebUI.Components
+@using WebUI.Components.CompanyProfile
+@using WebUI.Components.Forms
+@using WebUI.Factory
+@using WebUI.Data.Enums
+@inject ServiceFactory _factory
+@inject IMatToaster _toaster
+@inject IWebHostEnvironment Environment
+@inject NavigationManager NavigationManager;
+
+@attribute [Authorize(Roles = "SuperAdmin, Admin, User")]
+<style>
+    .control-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #444;
+        margin: 0 0 3px;
+        line-height: 14px;
+    }
+
+    .form-control[type="file"] {
+        padding: 0.2rem 0.6rem;
+    }
+
+    .company-profile .input-group-prepend {
+        width: 100%;
+    }
+</style>
+<AuthorizeView Roles="SuperAdmin,Admin,User">
+    <Authorized Context="authContext">
+        <CompanyManagementPage TItem="CompanyProfile"
+                               TService="ServiceBase"
+                               IdField="@(x => x.Id)"
+                               Title="Company Profile"
+                               IdFieldFilter="@(x => x.Id== Id)"
+                               ReturnPath="@($"/company/profile/{null}")"
+                               OnAfterSaveAsync="(args)=>OnAfterSave(args.Item1, args.Item2)">
+            <EditFields>
+                <!--Form Fields-->
+                <div class="card bg-light company-profile">
+                    <div class="card-body">
+                        <div class="input-group input-group-sm">
+                            <div class="col-lg-6 py-1">
+                                <InputGroup Label="Name" ContainerClass="w-100">
+                                    <InputText class="form-control form-control-sm " @bind-Value="@context.Name" />
+                                </InputGroup>
+                                <ValidationMessage For="@(() => context.Name)" />
+                            </div>
+                            <div class="col-lg-6 py-1">
+                                <InputGroup Label="Site Title">
+                                    <InputText class="form-control" @bind-Value="@context.SiteTitle" />
+                                </InputGroup>
+                            </div>
+                            <div class="col-lg-6 py-1">
+                                <InputGroup Label="Phone Number">
+                                    <InputText class="form-control form-control-sm w-100" @bind-Value="@context.PhoneNumber" maxlength="32" />
+                                </InputGroup>
+                            </div>
+                            <div class="col-lg-6 py-1">
+                                <InputGroup Label="Address">
+                                    <InputText class="form-control form-control-sm w-100" @bind-Value="@context.Address" />
+                                </InputGroup>
+                                <ValidationMessage For="@(() => context.Address)" />
+                            </div>
+                            <div class="col-lg-6 py-1">
+                                <InputGroup Label="City">
+                                    <InputText class="form-control form-control-sm w-100" @bind-Value="@context.City" maxlength="255" />
+                                </InputGroup>
+                            </div>
+                            <div class="col-lg-6 py-1">
+                                <InputGroup Label="State">
+                                    <InputText class="form-control form-control-sm w-100" @bind-Value="@context.State" maxlength="255" />
+                                </InputGroup>
+                            </div>
+                            <div class="col-lg-6 py-1">
+                                <InputGroup Label="ZipCode">
+                                    <InputText class="form-control form-control-sm w-100" @bind-Value="@context.ZipCode" maxlength="255" />
+                                </InputGroup>
+                            </div>
+
+                            <div class="col-lg-6 py-1">
+                                <InputGroup Label="Report Email">
+                                    <InputText class="form-control form-control-sm w-100" @bind-Value="@context.ReportEmail" maxlength="32" />
+                                </InputGroup>
+                            </div>
+                            <div class="col-lg-6 py-1">
+                                <InputGroup Label="Sender Email">
+                                    <InputText class="form-control form-control-sm" @bind-Value="@context.SenderEmail" maxlength="255" />
+                                </InputGroup>
+                            </div>
+                            <div class="col-lg-6 py-1">
+                            </div>
+                            <div class="col-lg-6 py-1 upload-form">
+                                <InputGroup Label="Upload Logo">
+
+                                    <InputFile accept=".jpeg, .jpg, .png;" AllowedExtensions=".jpeg;.jpg;.png;" OnChange="UploadLogo" class="form-control" />
+                                    <InputText type=hidden class="form-control" @bind-Value="@context.Logo" />
+
+                                </InputGroup>
+                                @{
+                                    if (!string.IsNullOrEmpty(logoUrl))
+                                    {
+                                        <img src="data:image/png;base64, @logoUrl" height="75" width="75" class="mr-2" />
+                                    }
+                                    context.Logo = companyProfile.Logo;
+                                }
+                            </div>
+                            <div class="col-lg-6 py-1 upload-form">
+                                <InputGroup Label="Upload Favicon" Colspan="12">
+
+                                    <InputText type="hidden" class="form-control" @bind-Value="@context.Favicon" />
+                                    <InputFile accept=".jpeg, .jpg, .png;" AllowedExtensions=".jpeg;.jpg;.png;" OnChange="UploadFavicon" class="form-control" />
+                                </InputGroup>
+                                @{
+                                    if (!string.IsNullOrEmpty(faviconUrl))
+                                    {
+                                        <img src="data:image/png;base64, @faviconUrl" height="50" width="50" />
+                                    }
+                                    context.Favicon = companyProfile.Favicon;
+                                }
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </EditFields>
+        </CompanyManagementPage>
+    </Authorized>
+</AuthorizeView>
+@code {
+
+    /// <summary>
+    /// Parameters
+    /// </summary>
+    /// <returns></returns>
+    #region
+    [CascadingParameter(Name = "MainLayout")]
+    public MainLayout MainLayout { get; set; }
+    [Parameter]
+    public int? Id { get; set; }
+    #endregion
+
+    /// <summary>
+    /// Protected Fields
+    /// </summary>
+    /// <returns></returns>
+    #region
+    /// <summary>
+    /// company profile model object
+    /// </summary>
+    /// <returns></returns>
+    protected CompanyProfile companyProfile = new CompanyProfile();
+
+    /// <summary>
+    /// company service
+    /// </summary>
+    /// <returns></returns>
+    protected CompanyService Service { get; set; }
+
+    /// <summary>
+    /// servicebase service
+    /// </summary>
+    /// <returns></returns>
+    protected ServiceBase ServiceBase { get; set; }
+
+    /// <summary>
+    /// property to store logoUrl
+    /// </summary>
+    /// <returns></returns>
+    protected string logoUrl = string.Empty;
+
+    /// <summary>
+    /// property to store faviconUrl
+    /// </summary>
+    /// <returns></returns>
+    protected string faviconUrl = string.Empty;
+
+    /// <summary>
+    /// property to store TempFavicon
+    /// </summary>
+    /// <returns></returns>
+    protected string TempFavicon { get; set; }
+
+    /// <summary>
+    /// property to store TempLogo
+    /// </summary>
+    /// <returns></returns>
+    protected string TempLogo { get; set; }
+
+    protected string BasePath { get; set; }
+    #endregion
+
+    /// <summary>
+    /// Functions for uploading logo and favicon icon
+    /// </summary>
+    /// <returns></returns>
+    #region
+    public override async Task SetParametersAsync(ParameterView parameters)
+    {
+        BasePath = Environment.WebRootPath;
+        if (parameters.TryGetValue<int?>(nameof(Id), out var value))
+        {
+            Service = Service ?? _factory.CreateCompanyService();
+            companyProfile = await Service.FindSingleEntity<CompanyProfile>() ?? new CompanyProfile();
+            Id = companyProfile.Id;
+            TempFavicon = companyProfile.Favicon;
+            TempLogo = companyProfile.Logo;
+            if (!string.IsNullOrEmpty(companyProfile.Logo) && System.IO.File.Exists($"{BasePath}{EnumExtension.GetDescription(FolderPath.CompanyLogo)}{companyProfile.Logo}"))
+            {
+                byte[] byteArray = System.IO.File.ReadAllBytes($"{BasePath}{EnumExtension.GetDescription(FolderPath.CompanyLogo)}{companyProfile.Logo}");
+                logoUrl = Convert.ToBase64String(byteArray);
+            }
+            if (!string.IsNullOrEmpty(companyProfile.Favicon) && System.IO.File.Exists($"{BasePath}{EnumExtension.GetDescription(FolderPath.Favicon)}{companyProfile.Favicon}"))
+            {
+                byte[] byteArray = System.IO.File.ReadAllBytes($"{BasePath}{EnumExtension.GetDescription(FolderPath.Favicon)}{companyProfile.Favicon}");
+                faviconUrl = Convert.ToBase64String(byteArray);
+            }
+        }
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// company logo upload function
+    /// </summary>
+    /// <param name="eventArgs"></param>
+    /// <returns></returns>
+    protected async Task UploadLogo(InputFileChangeEventArgs eventArgs)
+    {
+        companyProfile.Logo = await HandleFileSelected(eventArgs, EnumExtension.GetDescription(FolderPath.CompanyLogo), true);
+        if (!string.IsNullOrEmpty(companyProfile.Logo))
+        {
+            var resizedImageFile = await eventArgs.File.RequestImageFileAsync(eventArgs.File.ContentType, 100, 100);
+            var buffer = new byte[resizedImageFile.Size];
+            await resizedImageFile.OpenReadStream().ReadAsync(buffer);
+            logoUrl = Convert.ToBase64String(buffer);
+        }
+    }
+
+    /// <summary>
+    /// favicon upload fuction
+    /// </summary>
+    /// <param name="eventArgs"></param>
+    /// <returns></returns>
+    protected async Task UploadFavicon(InputFileChangeEventArgs eventArgs)
+    {
+        companyProfile.Favicon = await HandleFileSelected(eventArgs, EnumExtension.GetDescription(FolderPath.Favicon), false);
+        if (!string.IsNullOrEmpty(companyProfile.Favicon))
+        {
+            var resizedImageFile = await eventArgs.File.RequestImageFileAsync(eventArgs.File.ContentType, 100, 100);
+            var buffer = new byte[resizedImageFile.Size];
+            await resizedImageFile.OpenReadStream().ReadAsync(buffer);
+            faviconUrl = Convert.ToBase64String(buffer);
+        }
+    }
+
+    /// <summary>
+    /// this function return name of the file
+    /// </summary>
+    /// <param name="eventArgs"></param>
+    /// <param name="folderPath"></param>
+    /// <param name="isCompanyLogo"></param>
+    /// <returns></returns>
+    protected async Task<string> HandleFileSelected(InputFileChangeEventArgs eventArgs, string folderPath, bool isCompanyLogo)
+    {
+        var selectedFile = eventArgs.File;
+        if (selectedFile != null)
+        {
+            try
+            {
+                var fileTypes = new List<string>() { "jpeg", "jpg", "png" };
+                if (fileTypes.Contains(selectedFile.ContentType.ToLower()))
+                {
+                    _toaster.Add("Accept only jpg, jpeg or png file", MatToastType.Danger);
+                    return string.Empty;
+                }
+
+                if (!Directory.Exists($"{BasePath}{folderPath}"))
+                {
+                    Directory.CreateDirectory($"{BasePath}{folderPath}");
+                }
+
+                if (isCompanyLogo)
+                {
+                    var fileExtension = System.IO.Path.GetExtension(selectedFile.Name);
+                    var fileName = $"{DateTime.Now.Ticks}-Company-Logo{fileExtension}";
+                    return fileName;
+                }
+                else
+                {
+                    var fileExtension = System.IO.Path.GetExtension(selectedFile.Name);
+                    var fileName = $"{DateTime.Now.Ticks}-Fevicon-Icon{fileExtension}";
+                    return fileName;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        return string.Empty;
+    }
+    #endregion
+
+    /// <summary>
+    /// This function saves the logo and favicon icon after successfully creating the company profile.
+    /// </summary>
+    /// <returns></returns>
+    #region
+    protected async Task OnAfterSave(CompanyProfile companyProfile, bool isSuccess)
+    {
+        ServiceBase = ServiceBase ?? await _factory.CreateService<ServiceBase>();
+        if (!string.IsNullOrEmpty(companyProfile.Logo) && !string.IsNullOrEmpty(logoUrl))
+        {
+            DeleteExistingCompanyLogo();
+            File.WriteAllBytes($"{BasePath}{EnumExtension.GetDescription(FolderPath.CompanyLogo)}{companyProfile.Logo}", Convert.FromBase64String(logoUrl));
+        }
+        if (!string.IsNullOrEmpty(companyProfile.Favicon) && !string.IsNullOrEmpty(faviconUrl))
+        {
+            DeleteExistingFaviconIcon();
+            File.WriteAllBytes($"{BasePath}{EnumExtension.GetDescription(FolderPath.Favicon)}{companyProfile.Favicon}", Convert.FromBase64String(faviconUrl));
+        }
+        NavigationManager.NavigateTo($"company/profile/{null}", forceLoad: true);
+    }
+
+    protected void DeleteExistingFaviconIcon()
+    {
+        if (System.IO.File.Exists($"{BasePath}{EnumExtension.GetDescription(FolderPath.Favicon)}{TempFavicon}"))
+        {
+            File.Delete($"{BasePath}{EnumExtension.GetDescription(FolderPath.Favicon)}{TempFavicon}");
+        }
+    }
+    protected void DeleteExistingCompanyLogo()
+    {
+        if (System.IO.File.Exists($"{BasePath}{EnumExtension.GetDescription(FolderPath.CompanyLogo)}{TempLogo}"))
+        {
+            File.Delete($"{BasePath}{EnumExtension.GetDescription(FolderPath.CompanyLogo)}{TempLogo}");
+        }
+    }
+
+    #endregion
+    }

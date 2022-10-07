@@ -52,5 +52,10 @@ namespace WebUI.Factory
             return new ReportService(CreateApplicationDbContext());
         }
 
+        public CompanyService CreateCompanyService()
+        {
+            return new CompanyService(CreateApplicationDbContext());
+        }
+
     }
 }
